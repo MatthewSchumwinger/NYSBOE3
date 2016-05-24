@@ -2,6 +2,7 @@ library(shiny)
 # library(leaflet)
 # library(ggplot2)
 # library(dplyr)
+# library(readr)
 
 source("munge.R")
 
@@ -66,6 +67,7 @@ ui <- navbarPage(
            
            fluidPage(
              titlePanel("Transactions"),
+             h5("(for election years 2008, 2010, 2012, 2014)"),
              
              # Create a new Row in the UI for selectInputs
              fluidRow(
