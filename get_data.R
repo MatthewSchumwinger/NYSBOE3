@@ -36,23 +36,27 @@ commcand <- get_commcand()
 # transactions
 get_allreports <- function(){
   
-  message("This retrieves a large compressed file (approximately 282 MB) and may
-          take a while to download and transform into a data frame.")
-  retrieved <- Sys.Date()
-  allreports_url <- "http://www.elections.ny.gov/NYSBOE/download/ZipDataFiles/ALL_REPORTS.zip"
+  ## URL retrieveal is blocked as us of 5/25/16, 
+    # message("This retrieves a large compressed file (approximately 282 MB) and may
+    #         take a while to download and transform into a data frame.")
+    # retrieved <- Sys.Date()
+    # allreports_url <- "http://www.elections.ny.gov/NYSBOE/download/ZipDataFiles/ALL_REPORTS.zip"
+    # mainDir <- getwd()
+    # subDir <- "data/data_docs"
+    # path <- paste(mainDir, subDir, sep = "/")
+    # temp <- tempfile()
+    # download.file(allreports_url, temp)
+    # dir.create(file.path(mainDir, subDir), showWarnings = FALSE)
+    # unzip(temp, exdir = path)
   
-  mainDir <- getwd()
-  subDir <- "data/data_docs"
-  path <- paste(mainDir, subDir, sep = "/")
-  temp <- tempfile()
-  download.file(allreports_url, temp)
-  dir.create(file.path(mainDir, subDir), showWarnings = FALSE)
-  unzip(temp, exdir = path)
+    # allreports <- readr::read_csv(paste0(path, "/ALL_REPORTS.out"), col_names =  FALSE,
+    #                               col_types = "cccccccccccccccccccccccccccccc")
   
-  # allreports <- readr::read_csv(paste0(path, "/ALL_REPORTS.out"), col_names =  FALSE, 
-  #                      col_types = "cccccccccccccccccccccccccccccc")
-  allreports <- data.table::fread(paste0(path, "/ALL_REPORTS.out"), sep = ",", 
-                                header = FALSE)
+  ## so load data from previously retrieved file
+  path <-
+    # "~/Dropbox/Analytics-Consulting/Clients/QRI/campaign_finance/raw_data/ALL_REPORTS/ALL_REPORTS.txt"
+  allreports <- readr::read_csv(path, col_names =  FALSE,
+                                col_types = "cccccccccccccccccccccccccccccc")
   allreports
 }
 allreports <- get_allreports()
