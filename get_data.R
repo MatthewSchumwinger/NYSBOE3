@@ -16,9 +16,19 @@ get_commcand <- function(){
   download.file(commcand_url, temp)
   dir.create(file.path(mainDir, subDir), showWarnings = FALSE)
   unzip(temp, exdir = path)
+
+  # commcand <- readr::read_csv(paste0(path, "/COMMCAND.TXT"), col_names =  FALSE, 
+  #                      col_types = "ccccccccccccc")
   
-  commcand <- readr::read_csv(paste0(path, "/COMMCAND.TXT"), col_names =  FALSE, 
-                       col_types = "ccccccccccccc")
+  # one off preprocssing to fix record
+  message("preprocessing file ...")
+  x <- readLines(paste0(path, "/COMMCAND.TXT"))
+  x <- gsub('O"NEIL', "O'NEIL", x)
+  writeLines(x, paste0(path, "/COMMCAND.TXT"))
+  
+  commcand <- data.table::fread(paste0(path, "/COMMCAND.TXT"), sep = ",", 
+                                header = FALSE)
+  
   commcand
 }
 commcand <- get_commcand()
@@ -39,8 +49,10 @@ get_allreports <- function(){
   dir.create(file.path(mainDir, subDir), showWarnings = FALSE)
   unzip(temp, exdir = path)
   
-  allreports <- readr::read_csv(paste0(path, "/ALL_REPORTS.out"), col_names =  FALSE, 
-                       col_types = "cccccccccccccccccccccccccccccc")
+  # allreports <- readr::read_csv(paste0(path, "/ALL_REPORTS.out"), col_names =  FALSE, 
+  #                      col_types = "cccccccccccccccccccccccccccccc")
+  allreports <- data.table::fread(paste0(path, "/ALL_REPORTS.out"), sep = ",", 
+                                header = FALSE)
   allreports
 }
 allreports <- get_allreports()
