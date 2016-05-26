@@ -1,5 +1,24 @@
 ## script to process/parse data and save for load with global.R
 
+##  change amount to numeric
+trans$AMOUNT_70 <- as.numeric(trans$AMOUNT_70)
+
+## add filer name to filer ID
+
+
+
+## search on filer ID
+
+
+
+
+
+
+
+
+
+
+
 ## fix Contrib_Code_20 
 # trans$CONTRIB_CODE_20 <- toupper(trans$CONTRIB_CODE_20)
 # y <- table(trans$CONTRIB_CODE_20)
