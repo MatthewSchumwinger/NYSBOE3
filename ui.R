@@ -45,13 +45,13 @@ shinyUI(navbarPage(
            ),
            mycite
   ),
-  
+
   tabPanel("Transactions",
-           
+
            fluidPage(
              titlePanel("Transactions"),
              h5("(for election years 2008, 2010, 2012, 2014)"),
-             
+
              # Create a new Row in the UI for selectInputs
              fluidRow(
                column(4,
@@ -77,17 +77,37 @@ shinyUI(navbarPage(
              fluidRow(
                DT::dataTableOutput("table_trans")
              ),
-             
+
              mycite
            )
   ),
+
+  tabPanel("Detailed Transaction View",
+           fluidPage(
+             sidebarLayout(
+               sidebarPanel(
+                 numericInput("t_rownum", "Row # of transaction record to view:", 1),
+
+                 helpText("Note: the row # is the left-most column on the
+                        'Transactions' tab.")
+               ),
+               mainPanel(
+                 h4("Full Transaction Record"),
+                 verbatimTextOutput("trans_view")
+               )
+             )
+             )
+           ),
+
   tabPanel("Documentation",
            fluidRow(
-             column(12,
-                    pre(includeText("data/data_docs/CODES.TXT"))
-             ),
+             h4("Transactions dataset"),
              column(12,
                     pre(includeText("data/data_docs/EFSSCHED.TXT"))
+             ),
+             h4("Filers dataset"),
+             column(12,
+                    pre(includeText("data/data_docs/CODES.TXT"))
              )
            )
   )

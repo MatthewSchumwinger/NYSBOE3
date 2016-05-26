@@ -22,6 +22,10 @@ trans <- readRDS("data/s.trans.Rds")
 # trans <- readRDS("data/s.trans1000.Rds")
 filers <- readRDS("data/filers.Rds") 
 
+## remove bad characters
+# trans$CORP_30 <- stringr::str_replace(trans$CORP_30, "[:punct:]", "-")
+##
+
 # --- field names
 f <- function() {
   x <- read.fwf(file = "data/data_docs/FILEREC.TXT",
@@ -74,15 +78,15 @@ l_status <- list_for_dropdown(filers$STATUS)
 l_COMMITTEE_TYPE <- list_for_dropdown(filers$COMMITTEE_TYPE)
 
 # -- for TRANSACTIONS data
-l_Contrib_Code_20 <- list_for_dropdown(trans$CONTRIB_CODE_20)
 l_TRANSACTION_CODE <- list_for_dropdown(trans$TRANSACTION_CODE)
 l_E_YEAR <- list_for_dropdown(trans$E_YEAR)
+# l_Contrib_Code_20 <- list_for_dropdown(trans$CONTRIB_CODE_20)
+trans$CONTRIB_CODE_20 <- toupper(trans$CONTRIB_CODE_20)
+l_Contrib_Code_20 <- c('CAN','FAM','CORP','IND','PART','COM') # NOTE: this excludes 
+                                                              # many non-standard entries
 
-# data table fields
-# cols <- c("INCIDENT_N", "ADDRESS", "group", "OFFENSE1", "OFFENSE2", 
-#           # "OFFENSE3","OFFENSE4", "OFFENSE5", 
-#           "datetime", "score") 
-
-# cols <- names(allreports)
+# drop data table fields
+t_cols <- names(trans)
+t_cols <- t_cols[-c(2,5,7,9,18,19,21:30)]
 
 

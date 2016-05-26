@@ -54,9 +54,11 @@ get_allreports <- function(){
   
   ## so load data from previously retrieved file
   path <-
-    # "~/Dropbox/Analytics-Consulting/Clients/QRI/campaign_finance/raw_data/ALL_REPORTS/ALL_REPORTS.txt"
-  allreports <- readr::read_csv(path, col_names =  FALSE,
+    "~/Dropbox/Analytics-Consulting/Clients/QRI/campaign_finance/raw_data/ALL_REPORTS/ALL_REPORTS.txt"
+  allreports <- readr::read_delim(path, col_names = FALSE, escape_backslash = TRUE,
+                                  delim = ",", escape_double = FALSE,
                                 col_types = "cccccccccccccccccccccccccccccc")
+  
   allreports
 }
 allreports <- get_allreports()

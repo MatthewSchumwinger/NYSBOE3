@@ -26,10 +26,9 @@ shinyServer(function(input, output, session) {
     if (input$STATUS != "All") {
       df <- df[df$STATUS == input$STATUS, ]
     }
-    
-    # df <- df[ , cols] 
     df
-  }))
+  },
+  filter = "top"))
   
   output$table_trans <- DT::renderDataTable(DT::datatable({
     df <- trans 
@@ -43,8 +42,17 @@ shinyServer(function(input, output, session) {
       df <- df[df$TRANSACTION_CODE == input$TRANSACTION_CODE, ]
     }
     
-    # df <- df[ , cols] 
+    df <- df[ , t_cols]
     df
-  }))
-}
-)
+    },
+    options = list(searching = FALSE)
+    ))
+
+  # Show the first "n" observations
+  output$trans_view <- renderPrint({
+    rec <- trans[input$t_rownum,]
+    str(rec)
+  },
+  width = 90)
+  
+  })
