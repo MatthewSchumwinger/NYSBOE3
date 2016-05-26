@@ -22,6 +22,8 @@ trans <- readRDS("data/s.trans.Rds")
 # trans <- readRDS("data/s.trans1000.Rds")
 filers <- readRDS("data/filers.Rds") 
 
+
+
 ## remove bad characters
 # trans$CORP_30 <- stringr::str_replace(trans$CORP_30, "[:punct:]", "-")
 ##
@@ -59,6 +61,29 @@ names(filers) <- filer_cols[ ,1]
 # saveRDS(s.trans1000, "data/s.trans1000.Rds")
 
 
+######## mungin
+
+##  change amount to numeric
+trans$AMOUNT_70 <- as.numeric(trans$AMOUNT_70)
+
+## add filer name to filer ID
+filers <- data.table::as.data.table(filers)
+data.table::setkey(filers, FILER_ID)
+
+trans <- data.table::as.data.table(trans)
+keycols <- c("FILER_ID", "FREPORT_ID", "TRANSACTION_CODE", "E_YEAR", "T3_TRID")  
+data.table::setkey(trans, FILER_ID)
+
+trans <- merge(trans, filers, by = "FILER_ID", all.x = TRUE)
+trans <- trans[, !c(32:42), with=FALSE]
+order <- c("FILER_NAME", names(trans))
+order <- order[-32]
+data.table::setcolorder(trans, neworder = order)
+
+########## end mungin
+
+
+
 # -- drop down lists
 list_for_dropdown <- function(column, add.choose.one = FALSE) {
   l <- levels(as.factor(column))
@@ -87,6 +112,6 @@ l_Contrib_Code_20 <- c('CAN','FAM','CORP','IND','PART','COM') # NOTE: this exclu
 
 # drop data table fields
 t_cols <- names(trans)
-t_cols <- t_cols[-c(2,5,7,9,18,19,21:30)]
+t_cols <- t_cols[-c(3,6,8,10,19,20,22:31)]
 
-source("munge.R")
+

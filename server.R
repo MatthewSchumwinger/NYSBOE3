@@ -1,4 +1,5 @@
 library(shiny)
+# library(data.table)
 
 # Define server logic required to draw a histogram
 shinyServer(function(input, output, session) {
@@ -41,8 +42,8 @@ shinyServer(function(input, output, session) {
     if (input$TRANSACTION_CODE != "All") {
       df <- df[df$TRANSACTION_CODE == input$TRANSACTION_CODE, ]
     }
-    
-    df <- df[ , t_cols]
+
+    df <- df[ , t_cols, with = FALSE]
     df
     },
     options = list(searching = FALSE)
