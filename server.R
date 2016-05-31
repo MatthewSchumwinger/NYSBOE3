@@ -46,6 +46,7 @@ shinyServer(function(input, output, session) {
     df <- df[ , t_cols, with = FALSE]
     df
     },
+    filter = "top",
     options = list(searching = FALSE)
     ))
 

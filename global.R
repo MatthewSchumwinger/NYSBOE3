@@ -11,6 +11,7 @@
 # trans <- readRDS("data/head_reports.Rds")
 
 # -- handle parsing errors in trans file (errors in filers file solved in get_data() function)
+# trans <- allreports
 # err_trans <- readr::problems(trans)
 # eti <- err_trans[err_trans$expected == "30 columns", 1]   # index of errors that
 # pruned_trans <- trans[unlist(eti), ]                      # result in shifted columns.
@@ -18,7 +19,8 @@
 # trans <- trans[-unlist(eti), ]
 # saveRDS(trans, "data/trans.Rds")
 
-trans <- readRDS("data/s.trans.Rds")
+trans <- readRDS("data/trans.Rds")
+# trans <- readRDS("data/s.trans.Rds")
 # trans <- readRDS("data/s.trans1000.Rds")
 filers <- readRDS("data/filers.Rds") 
 
@@ -65,6 +67,10 @@ names(filers) <- filer_cols[ ,1]
 
 ##  change amount to numeric
 trans$AMOUNT_70 <- as.numeric(trans$AMOUNT_70)
+trans$AMOUNT2_72 <- as.numeric(trans$AMOUNT2_72)
+
+## change to date format
+trans$DATE1_10 <- lubridate::mdy(trans$DATE1_10)
 
 ## add filer name to filer ID
 filers <- data.table::as.data.table(filers)
