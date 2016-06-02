@@ -1,0 +1,120 @@
+---
+title: "Summary"
+author: "Matt Schumwinger, Big Lake Data LLC"
+date: "June 2, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+source("global.R") # make sure global.R is set to pick up the full file trans.Rds
+library(stringr)
+library(data.table)
+library(stringr)
+library(lubridate)
+```
+
+```{r load workspace}
+load("data/sugarman.Rds")
+```
+
+
+```{r calcs, eval=FALSE, include=FALSE}
+
+filers <- data.table(filers, key = "FILER_ID")
+trans <- data.table(trans, key = "FILER_ID")
+# drop bad dates
+trans <- trans[DATE1_10 >= lubridate::ymd(19990101) 
+                 & DATE1_10 < lubridate::ymd(20170101) ,]
+
+# ----- helpers -----
+ante5yrs <- function(date) {
+  date - lubridate::years(5)
+}
+inCodes <- c("A","B","C","D","E","G")  # incoming contribution codes
+
+# ---- criterion #1 ----
+# create table of just county or party committees
+cmtes <- subset(filers, FILER_TYPE == "COMMITTEE" 
+                  & !COMMITTEE_TYPE %in% c("1", "2", "9", "9B", "9U"))
+table(cmtes$COMMITTEE_TYPE)
+# subset transactions matching just filers in committees table
+trans1 <- trans[cmtes]
+trans1 <- trans1[, c(1:31), with=FALSE]
+
+# ---- criterion #2 ----
+
+# subet trans by only incoming contribution codes
+trans2 <- trans1 %>% filter(TRANSACTION_CODE %in% inCodes)
+
+# ---- criterion #3 ----
+# one-off name fix
+trans2[FILER_NAME == "*PHELPS DEMOCRATIC COMMITTEE", FILER_NAME := "PHELPS DEMOCRATIC COMMITTEE"]
+
+# create "oppositeParty" field
+# TODO: condition this on time before contribution like in criterion 2
+trans3 <- trans2 %>%
+  mutate(opp_party = paste(CORP_30, FIRST_NAME_40, MID_INIT_42, LAST_NAME_44)) 
+count_by_opp_part <- trans3 %>%
+  group_by(FILER_NAME, opp_party) %>% 
+  summarise(tot_from_opp_party = n())
+trans3 <- left_join(trans3, count_by_opp_part, by = c("FILER_NAME", "opp_party")) #TODO: work on warning message
+trans3 <- trans3 %>% mutate(reg_opp_party = tot_from_opp_party > 3)
+# table(trans3$reg_opp_party)  
+
+
+# ---- criterion #2 (cont.) ----
+
+# ---- TODO: convert to lapply and move back before criterion 3
+add5yrAvg <- function(dt){
+  start <- Sys.time()
+  for (i in 1:nrow(dt)) {
+    filer <- dt$FILER_NAME[i]
+    date <- dt$DATE1_10[i]
+    yrs5 <- interval(ante5yrs(date), date)
+    
+    # append preceding 5-yr contribution average by filer
+    tt <- subset(dt, DATE1_10 %within% yrs5 & FILER_NAME == filer, select = AMOUNT_70)
+    avg <- mean(tt$AMOUNT_70)
+    dt$pre5yrAvg[i] <- avg
+    # is AMOUNT 2x more than that year's average?
+    dt$bigTrans[i] <- dt$AMOUNT_70[i] > 2*avg
+  }
+  end <- Sys.time()
+  print(end - start)
+  dt
+}
+
+trans3F <- trans3 %>% filter(!reg_opp_party)
+trans3F2 <- add5yrAvg(trans3F)
+test <- trans3F2 %>% filter(bigTrans)
+
+## ---- save workspace ---
+save.image("data/sugarman.Rds")
+
+
+```
+
+
+
+## Sugarman Criteria
+
+ 1) The recipient is a county committee or party committee;  
+ 2) The contribution amounted to at least two times the average annual amount of contributions received by the recipient county committee in the five years prior to the contribution;  
+ 3) The contributor had given to the recipient committee no more than twice in the past; and  
+ 4) No more than one month after receiving the contribution(s), the county committee transferred a similar amount of money directly to a candidate's campaign (i.e.not independent expenditures).
+
+```{r starting}
+nrow(filers)
+nrow(trans)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

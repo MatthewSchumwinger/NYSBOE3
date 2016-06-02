@@ -1,12 +1,10 @@
-tt <- trans[trans$T3_TRID == "5644",]
-g <- trans[1396,] #by row number
 
 ## remove graphical characters that break data table search
 x <- allreports
-grep("\xc9", x$X10, value = TRUE) # yields 169 accented e
-grep("BLACKBIRD", x$x10, value = TRUE) # yields 169 accented e
+grep("\\\\", x$X10, value = TRUE) # yields 169 accented e
+grep("BLACKBIRD", x$X10, value = TRUE) # yields 169 accented e
 # x$X10 <- stringr::str_replace(x$X10, "\xc9", "foo") 
-x$X10 <- stringr::str_replace(x$X10, "[:punct:]", "-") 
+x$X10 <- stringr::str_replace(x$X10, "\\\\", "-foo-") 
 # x <- grep("[^[:graph:]]", trans$CORP_30, value = TRUE)
 
 # grep("\x", x$X10, value = TRUE) # 

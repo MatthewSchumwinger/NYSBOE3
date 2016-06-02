@@ -76,8 +76,8 @@ add5yrAvg <- function(dt){
 }
 
 trans3F <- trans3 %>% filter(!reg_opp_party)
-test <- add5yrAvgtrans3F)
-t <- subset(test, bigTrans)
+trans3F2 <- add5yrAvg(trans3F)
+test <- trans3F2 %>% filter(bigTrans)
 
 
 
