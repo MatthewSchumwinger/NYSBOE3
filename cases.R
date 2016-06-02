@@ -34,15 +34,24 @@ trans1 <- trans1[, c(1:31), with=FALSE]
 
 # ---- criterion #2 ----
 
-# subet trans by only incoming contribution codes
+# subset trans by only incoming contribution codes
 trans2 <- trans1 %>% filter(TRANSACTION_CODE %in% inCodes)
+# calculate cumulative average of trans for that filer prior to date of trans
+# this is not in a 5 year window, but works
+trans2 <- trans2 %>%
+  arrange(FILER_NAME, DATE1_10) %>%
+  group_by(FILER_NAME) %>%
+  mutate(cumAvg = cummean(AMOUNT_70)) %>%
+  mutate(bigTrans = AMOUNT_70 > cumAvg) 
+table(test$bigTrans)
+
 
 # ---- criterion #3 ----
 # one-off name fix
 trans2[FILER_NAME == "*PHELPS DEMOCRATIC COMMITTEE", FILER_NAME := "PHELPS DEMOCRATIC COMMITTEE"]
 
 # create "oppositeParty" field
-# TODO: condition this on time before contribution like in criterion 2
+# TODO: condition this on time before contribution 
 trans3 <- trans2 %>%
   mutate(opp_party = paste(CORP_30, FIRST_NAME_40, MID_INIT_42, LAST_NAME_44)) 
 count_by_opp_part <- trans3 %>%
@@ -51,38 +60,6 @@ count_by_opp_part <- trans3 %>%
 trans3 <- left_join(trans3, count_by_opp_part, by = c("FILER_NAME", "opp_party")) #TODO: work on warning message
 trans3 <- trans3 %>% mutate(reg_opp_party = tot_from_opp_party > 3)
 # table(trans3$reg_opp_party)  
-
-
-# ---- criterion #2 (cont.) ----
-
-# ---- TODO: convert to lapply and move back before criterion 3
-add5yrAvg <- function(dt){
-  start <- Sys.time()
-  for (i in 1:nrow(dt)) {
-    filer <- dt$FILER_NAME[i]
-    date <- dt$DATE1_10[i]
-    yrs5 <- interval(ante5yrs(date), date)
-    
-    # append preceding 5-yr contribution average by filer
-    tt <- subset(dt, DATE1_10 %within% yrs5 & FILER_NAME == filer, select = AMOUNT_70)
-    avg <- mean(tt$AMOUNT_70)
-    dt$pre5yrAvg[i] <- avg
-    # is AMOUNT 2x more than that year's average?
-    dt$bigTrans[i] <- dt$AMOUNT_70[i] > 2*avg
-  }
-  end <- Sys.time()
-  print(end - start)
-  dt
-}
-
-trans3F <- trans3 %>% filter(!reg_opp_party)
-trans3F2 <- add5yrAvg(trans3F)
-test <- trans3F2 %>% filter(bigTrans)
-
-
-
-
-
 
 
 
@@ -125,6 +102,29 @@ oconnel_trans <- subset(trans, FILER_ID == oconnel)
 
 
 # --- old code
+# criterion 2
+# ---- TODO: convert to lapply and move back before criterion 3
+# add5yrAvg <- function(dt){
+#   start <- Sys.time()
+#   for (i in 1:nrow(dt)) {
+#     filer <- dt$FILER_NAME[i]
+#     date <- dt$DATE1_10[i]
+#     yrs5 <- interval(ante5yrs(date), date)
+#     
+#     # append preceding 5-yr contribution average by filer
+#     tt <- subset(dt, DATE1_10 %within% yrs5 & FILER_NAME == filer, select = AMOUNT_70)
+#     avg <- mean(tt$AMOUNT_70)
+#     dt$pre5yrAvg[i] <- avg
+#     # is AMOUNT 2x more than that year's average?
+#     dt$bigTrans[i] <- dt$AMOUNT_70[i] > 2*avg
+#   }
+#   end <- Sys.time()
+#   print(end - start)
+#   dt
+# }
+# trans3F <- trans3 %>% filter(!reg_opp_party)
+# trans3F2 <- add5yrAvg(trans3F)
+# test <- trans3F2 %>% filter(bigTrans)
 
 
 ## using lapply

@@ -5,8 +5,8 @@ date: "June 2, 2016"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r setup, include=FALSE, eval=FALSE}
+knitr::opts_chunk$set(eval = FALSE, include = FALSE)
 source("global.R") # make sure global.R is set to pick up the full file trans.Rds
 library(stringr)
 library(data.table)
@@ -17,9 +17,44 @@ library(lubridate)
 ```{r load workspace}
 load("data/sugarman.Rds")
 ```
+Data profile:  
+
+- **`r formatC(nrow(trans), big.mark=",") `** transactions in election years 2008, 2010, 2012, and 2014
+- **`r formatC(nrow(filers), big.mark=",") `** filers
+
+## Applying the Sugarman Standard
+Criteria:  
+
+ 1) The recipient is a county committee or party committee;  
+```{r c1, message=FALSE, warning=FALSE, eval=FALSE}
+# create table of just county or party committees
+cmtes <- subset(filers, FILER_TYPE == "COMMITTEE" 
+                  & !COMMITTEE_TYPE %in% c("1", "2", "9", "9B", "9U"))
+table(cmtes$COMMITTEE_TYPE)
+# subset transactions matching just filers in committees table
+trans1 <- trans[cmtes]
+trans1 <- trans1[, c(1:31), with=FALSE]
+```
+results in:  
+- **`r formatC(nrow(cmtes), big.mark=",") `** filers classed as county or party committees
+- **`r formatC(nrow(trans), big.mark=",") `** transactions matching such committees
+
+ 2) The contribution amounted to at least two times the average annual amount of contributions received by the recipient county committee in the five years prior to the contribution;  
+```{r c2, message=FALSE, warning=FALSE, eval=FALSE}
+# subset trans by only incoming contribution codes
+trans2 <- trans1 %>% filter(TRANSACTION_CODE %in% inCodes)
+```
+ 3) The contributor had given to the recipient committee no more than twice in the past; and  
+```{r c3, message=FALSE, warning=FALSE, eval=FALSE}
+
+```
+ 4) No more than one month after receiving the contribution(s), the county committee transferred a similar amount of money directly to a candidate's campaign (i.e.not independent expenditures).
+```{r c4, message=FALSE, warning=FALSE, eval=FALSE}
+
+```
 
 
-```{r calcs, eval=FALSE, include=FALSE}
+```{r munge, eval=FALSE, include=FALSE}
 
 filers <- data.table(filers, key = "FILER_ID")
 trans <- data.table(trans, key = "FILER_ID")
@@ -44,7 +79,7 @@ trans1 <- trans1[, c(1:31), with=FALSE]
 
 # ---- criterion #2 ----
 
-# subet trans by only incoming contribution codes
+# subset trans by only incoming contribution codes
 trans2 <- trans1 %>% filter(TRANSACTION_CODE %in% inCodes)
 
 # ---- criterion #3 ----
@@ -94,27 +129,3 @@ save.image("data/sugarman.Rds")
 
 
 ```
-
-
-
-## Sugarman Criteria
-
- 1) The recipient is a county committee or party committee;  
- 2) The contribution amounted to at least two times the average annual amount of contributions received by the recipient county committee in the five years prior to the contribution;  
- 3) The contributor had given to the recipient committee no more than twice in the past; and  
- 4) No more than one month after receiving the contribution(s), the county committee transferred a similar amount of money directly to a candidate's campaign (i.e.not independent expenditures).
-
-```{r starting}
-nrow(filers)
-nrow(trans)
-```
-
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
