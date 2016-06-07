@@ -65,6 +65,9 @@ names(filers) <- filer_cols[ ,1]
 
 ######## mungin
 
+## add transaction ID
+trans$tID <- rownames(trans)
+
 ##  change amount to numeric
 trans$AMOUNT_70 <- as.numeric(trans$AMOUNT_70)
 trans$AMOUNT2_72 <- as.numeric(trans$AMOUNT2_72)
@@ -81,9 +84,9 @@ keycols <- c("FILER_ID", "FREPORT_ID", "TRANSACTION_CODE", "E_YEAR", "T3_TRID")
 data.table::setkey(trans, FILER_ID)
 
 trans <- merge(trans, filers, by = "FILER_ID", all.x = TRUE)
-trans <- trans[, !c(32:42), with=FALSE]
+trans <- trans[, !c(33:43), with=FALSE]
 order <- c("FILER_NAME", names(trans))
-order <- order[-32]
+order <- order[-33]
 data.table::setcolorder(trans, neworder = order)
 
 ########## end mungin

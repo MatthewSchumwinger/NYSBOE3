@@ -117,7 +117,7 @@ $(document).ready(function () {
 
 <h1 class="title toc-ignore">Summary</h1>
 <h4 class="author"><em>Matt Schumwinger, Big Lake Data LLC</em></h4>
-<h4 class="date"><em>June 2, 2016</em></h4>
+<h4 class="date"><em>June 7, 2016</em></h4>
 
 </div>
 
@@ -139,8 +139,8 @@ cmtes &lt;- subset(filers, FILER_TYPE == &quot;COMMITTEE&quot;
                   &amp; !COMMITTEE_TYPE %in% c(&quot;1&quot;, &quot;2&quot;, &quot;9&quot;, &quot;9B&quot;, &quot;9U&quot;))
 table(cmtes$COMMITTEE_TYPE)
 # subset transactions matching just filers in committees table
-trans1 &lt;- trans[cmtes]
-trans1 &lt;- trans1[, c(1:31), with=FALSE]</code></pre>
+trans1 &lt;- trans[cmtes]                                                            # BUG: this may create NAs in first column
+trans1 &lt;- trans1[, c(1:32), with=FALSE]</code></pre>
 <p>results in:</p>
 <ul>
 <li><strong>1,244</strong> filers classed as county or party committees</li>
@@ -151,65 +151,88 @@ trans1 &lt;- trans1[, c(1:31), with=FALSE]</code></pre>
 </ol>
 <pre class="r"><code># subset trans by only incoming contribution codes
 trans2 &lt;- trans1 %&gt;% filter(TRANSACTION_CODE %in% inCodes)
+
 # calculate cumulative average of trans for that filer prior to date of trans
-# this is not in a 5 year window, but works
+# Note: this is not in a 5 year window, but works
 trans2 &lt;- trans2 %&gt;%
   arrange(FILER_NAME, DATE1_10) %&gt;%
   group_by(FILER_NAME) %&gt;%
   mutate(cumAvg = cummean(AMOUNT_70)) %&gt;%
-  mutate(bigTrans = AMOUNT_70 &gt; cumAvg) 
-# table(trans2$bigTrans)[2]
-tBig &lt;- filter(trans3, bigTrans)</code></pre>
+  mutate(bigTrans = AMOUNT_70 &gt;= 2*cumAvg) 
+
+tBig &lt;- filter(trans2, bigTrans)</code></pre>
 <p>results in:</p>
 <ul>
-<li><strong>148,479</strong> transactions received by a county or party committee that were at least two times the average annual amount of contributions received by the recipient committee prior to the contribution. (NOTE: this is greater than a 5-yr window.)</li>
+<li><strong>66,105</strong> transactions received by a county or party committee that were at least two times the average annual amount of contributions received by the recipient committee prior to the contribution. (NOTE: this is greater than a 5-yr window.)</li>
 </ul>
 <ol start="3" style="list-style-type: decimal">
 <li><strong>The contributor had given to the recipient committee no more than twice in the past</strong></li>
 </ol>
 <pre class="r"><code># one-off name fix
-trans2[FILER_NAME == &quot;*PHELPS DEMOCRATIC COMMITTEE&quot;, FILER_NAME := &quot;PHELPS DEMOCRATIC COMMITTEE&quot;]
+trans2[FILER_NAME == &quot;*PHELPS DEMOCRATIC COMMITTEE&quot;, 
+       FILER_NAME := &quot;PHELPS DEMOCRATIC COMMITTEE&quot;]
 
 # create &quot;oppositeParty&quot; field
-# TODO: condition this on time before contribution 
-trans3 &lt;- trans2 %&gt;%
+trans3 &lt;- trans2 %&gt;%                                                            # TODO: condition this on time before contribution 
   mutate(opp_party = paste(CORP_30, FIRST_NAME_40, MID_INIT_42, LAST_NAME_44)) 
+
+# count contributions by opposite party
 count_by_opp_part &lt;- trans3 %&gt;%
   group_by(FILER_NAME, opp_party) %&gt;% 
   summarise(tot_from_opp_party = n())
-trans3 &lt;- left_join(trans3, count_by_opp_part, by = c(&quot;FILER_NAME&quot;, &quot;opp_party&quot;)) #TODO: work on warning message
-trans3 &lt;- trans3 %&gt;% mutate(reg_opp_party = tot_from_opp_party &gt; 3)
+trans3 &lt;- left_join(trans3, count_by_opp_part, by = c(&quot;FILER_NAME&quot;, &quot;opp_party&quot;)) #TODO: work on encoding warning message
+trans3 &lt;- trans3 %&gt;% mutate(rare_opp_party = tot_from_opp_party &lt;= 3)
 # table(trans3$reg_opp_party) 
-tBigRare &lt;- filter(trans3, bigTrans &amp; !reg_opp_party)</code></pre>
+tBigRare &lt;- filter(trans3, bigTrans &amp; rare_opp_party)</code></pre>
 <p>results in:</p>
 <ul>
-<li><p><strong>76,201</strong> transactions received by a county or party committee that were</p></li>
+<li><p><strong>30,957</strong> transactions received by a county or party committee that were:</p></li>
 <li>at least two times the average annual amount of contributions received by the recipient committee prior to the contribution. (NOTE: this is greater than a 5-yr window.) AND<br />
 </li>
-<li><p>were from a contributor that had given to the th recipient committee not more than twice ever. (NOTE: this is broader than looking just in time preceeding the contribution.)</p></li>
+<li><p>were from a contributor that had given to the recipient committee not more than twice ever else. (NOTE: this is broader than looking just in the time preceeding the contribution.)</p></li>
 </ul>
 <ol start="4" style="list-style-type: decimal">
-<li><strong>No more than one month after receiving the contribution(s), the county committee transferred a similar amount of money directly to a candidate’s campaign (i.e.not independent expenditures).</strong></li>
+<li><strong>No more than one month after receiving the contribution(s), the county committee transferred a similar amount of money directly to a candidate’s campaign (i.e., not independent expenditures).</strong></li>
 </ol>
-<pre class="r"><code>tBigRare &lt;- tBigRare %&gt;% 
-  mutate(month_int = interval(DATE1_10, DATE1_10 + months(1))) 
+<pre class="r"><code>df &lt;- setDT(tBigRare)                                                           
+                                                                                
+# create direction column of target transactions and filter for in and out
+df[, direction := ifelse(TRANSACTION_CODE %in% inCodes, &quot;in&quot;, 
+                         ifelse(TRANSACTION_CODE %in% outCodes, &quot;out&quot;, NA))]
+df &lt;- df %&gt;% filter(!is.na(direction)) %&gt;%
+  mutate(end_30 = DATE1_10 - days(30)) %&gt;%
+  select(FILER_NAME, DATE1_10, end_30, direction, TRANSACTION_CODE, AMOUNT_70, tID)
 
-# table of outgoing transactions
-tBigRare[200]
-target_amount &lt;- tBigRare$AMOUNT_70[200]
-target_filer &lt;- tBigRare$FILER_NAME[200]
-month_int &lt;- interval(tBigRare$DATE1_10[200], 
-                      tBigRare$DATE1_10[200] + months(1))
-# filter only outgoing transactions coded as &quot;contributions&quot;
-trans4 &lt;- trans1 %&gt;% 
-  filter(TRANSACTION_CODE %in% c(&quot;F&quot;, &quot;H&quot;)) %&gt;%
-  filter(PURPOSE_CODE1_100 == &quot;CNTRB&quot;)
+# create reference tables
+justIns &lt;- df %&gt;% filter(direction == &quot;in&quot;)                                       # this should be redundent
+justOuts &lt;- trans1 
+justOuts[, direction := ifelse(TRANSACTION_CODE %in% inCodes, &quot;in&quot;,               # TODO: refactor this to just dplyr for both df and trans1
+                         ifelse(TRANSACTION_CODE %in% outCodes, &quot;out&quot;, NA))]
+justOuts &lt;- justOuts %&gt;% filter(!is.na(direction)) %&gt;%
+  mutate(end_30 = DATE1_10 - days(30)) %&gt;%
+  select(FILER_NAME, DATE1_10, end_30, direction, TRANSACTION_CODE, AMOUNT_70, tID)
 
-test &lt;- trans4 %&gt;% 
-  filter(DATE1_10 %within% month_int &amp; FILER_NAME == target_filer)</code></pre>
+justIns[, `:=`(DATE1_102 = DATE1_10, id = .I)]
+setkey(justOuts, FILER_NAME, end_30, DATE1_10)
+
+ans = foverlaps(justIns, justOuts, by.x=c(&quot;FILER_NAME&quot;, &quot;DATE1_10&quot;, &quot;DATE1_102&quot;))[, DATE1_102 := NULL]
+
+flagged &lt;- ans %&gt;% filter(!is.na(direction)) %&gt;%
+  # group_by(i.tID, FILER_NAME, TRANSACTION_CODE) %&gt;% # this is grouped by outgoing transaction type
+  group_by(i.tID, FILER_NAME) %&gt;%
+  summarise(
+            nOutTrans = n(),
+            totalOut = sum(AMOUNT_70)) %&gt;%
+  mutate(tID = i.tID)
+
+flagged &lt;- inner_join(df, flagged, by = &quot;tID&quot;)
+
+flagged &lt;- flagged %&gt;% select(-c(FILER_NAME.y, direction, end_30, i.tID))
+names(flagged) &lt;- c(&quot;tID&quot;,&quot;FILER_NAME&quot;, &quot;DATE1_10&quot;,&quot;IN_TRANSACTION_CODE&quot;,
+                    &quot;AMOUNT_70&quot;,&quot;nOutTrans&quot;,&quot;totalOut&quot; )</code></pre>
 <p>results in:</p>
 <ul>
-<li><strong>22,071</strong> outgoing contributions made by county or party committees to any entity.</li>
+<li><strong>30,952</strong> incoming contributions to a county or party committee where that comittee made an outgoing contribution within 30 days. (NOTE: this is not conditioned on recipient type or “similar amount”)</li>
 </ul>
 </div>
 
