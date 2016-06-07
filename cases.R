@@ -43,7 +43,7 @@ trans2 <- trans2 %>%
   group_by(FILER_NAME) %>%
   mutate(cumAvg = cummean(AMOUNT_70)) %>%
   mutate(bigTrans = AMOUNT_70 > cumAvg) 
-table(test$bigTrans)
+# table(trans2$bigTrans)
 
 
 # ---- criterion #3 ----
@@ -60,7 +60,6 @@ count_by_opp_part <- trans3 %>%
 trans3 <- left_join(trans3, count_by_opp_part, by = c("FILER_NAME", "opp_party")) #TODO: work on warning message
 trans3 <- trans3 %>% mutate(reg_opp_party = tot_from_opp_party > 3)
 # table(trans3$reg_opp_party)  
-
 
 
 

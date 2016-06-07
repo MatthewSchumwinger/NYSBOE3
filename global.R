@@ -19,8 +19,8 @@
 # trans <- trans[-unlist(eti), ]
 # saveRDS(trans, "data/trans.Rds")
 
-# trans <- readRDS("data/trans.Rds")
-trans <- readRDS("data/s.trans.Rds")
+trans <- readRDS("data/trans.Rds")
+# trans <- readRDS("data/s.trans.Rds")
 # trans <- readRDS("data/s.trans1000.Rds")
 filers <- readRDS("data/filers.Rds") 
 

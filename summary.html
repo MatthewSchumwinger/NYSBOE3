@@ -123,16 +123,16 @@ $(document).ready(function () {
 
 
 <pre class="r"><code>load(&quot;data/sugarman.Rds&quot;)</code></pre>
-<p>Data profile:</p>
+<p>Data profile (all years):</p>
 <ul>
-<li><strong>2,958,620</strong> transactions in election years 2008, 2010, 2012, and 2014</li>
+<li><strong>9,968,197</strong> transactions</li>
 <li><strong>36,525</strong> filers</li>
 </ul>
 <div id="applying-the-sugarman-standard" class="section level2">
 <h2>Applying the Sugarman Standard</h2>
 <p>Criteria:</p>
 <ol style="list-style-type: decimal">
-<li>The recipient is a county committee or party committee;</li>
+<li><strong>The recipient is a county committee or party committee</strong></li>
 </ol>
 <pre class="r"><code># create table of just county or party committees
 cmtes &lt;- subset(filers, FILER_TYPE == &quot;COMMITTEE&quot; 
@@ -141,14 +141,76 @@ table(cmtes$COMMITTEE_TYPE)
 # subset transactions matching just filers in committees table
 trans1 &lt;- trans[cmtes]
 trans1 &lt;- trans1[, c(1:31), with=FALSE]</code></pre>
-<p>results in - <strong>1,244</strong> filers classed as county or party committees - <strong>2,958,620</strong> transactions matching such committees</p>
+<p>results in:</p>
+<ul>
+<li><strong>1,244</strong> filers classed as county or party committees</li>
+<li><strong>9,968,197</strong> transactions matching such committees</li>
+</ul>
 <ol start="2" style="list-style-type: decimal">
-<li>The contribution amounted to at least two times the average annual amount of contributions received by the recipient county committee in the five years prior to the contribution;<br />
-</li>
-<li>The contributor had given to the recipient committee no more than twice in the past; and<br />
-</li>
-<li>No more than one month after receiving the contribution(s), the county committee transferred a similar amount of money directly to a candidate’s campaign (i.e.not independent expenditures).</li>
+<li><strong>The contribution amounted to at least two times the average annual amount of contributions received by the recipient county committee in the five years prior to the contribution</strong></li>
 </ol>
+<pre class="r"><code># subset trans by only incoming contribution codes
+trans2 &lt;- trans1 %&gt;% filter(TRANSACTION_CODE %in% inCodes)
+# calculate cumulative average of trans for that filer prior to date of trans
+# this is not in a 5 year window, but works
+trans2 &lt;- trans2 %&gt;%
+  arrange(FILER_NAME, DATE1_10) %&gt;%
+  group_by(FILER_NAME) %&gt;%
+  mutate(cumAvg = cummean(AMOUNT_70)) %&gt;%
+  mutate(bigTrans = AMOUNT_70 &gt; cumAvg) 
+# table(trans2$bigTrans)[2]
+tBig &lt;- filter(trans3, bigTrans)</code></pre>
+<p>results in:</p>
+<ul>
+<li><strong>148,479</strong> transactions received by a county or party committee that were at least two times the average annual amount of contributions received by the recipient committee prior to the contribution. (NOTE: this is greater than a 5-yr window.)</li>
+</ul>
+<ol start="3" style="list-style-type: decimal">
+<li><strong>The contributor had given to the recipient committee no more than twice in the past</strong></li>
+</ol>
+<pre class="r"><code># one-off name fix
+trans2[FILER_NAME == &quot;*PHELPS DEMOCRATIC COMMITTEE&quot;, FILER_NAME := &quot;PHELPS DEMOCRATIC COMMITTEE&quot;]
+
+# create &quot;oppositeParty&quot; field
+# TODO: condition this on time before contribution 
+trans3 &lt;- trans2 %&gt;%
+  mutate(opp_party = paste(CORP_30, FIRST_NAME_40, MID_INIT_42, LAST_NAME_44)) 
+count_by_opp_part &lt;- trans3 %&gt;%
+  group_by(FILER_NAME, opp_party) %&gt;% 
+  summarise(tot_from_opp_party = n())
+trans3 &lt;- left_join(trans3, count_by_opp_part, by = c(&quot;FILER_NAME&quot;, &quot;opp_party&quot;)) #TODO: work on warning message
+trans3 &lt;- trans3 %&gt;% mutate(reg_opp_party = tot_from_opp_party &gt; 3)
+# table(trans3$reg_opp_party) 
+tBigRare &lt;- filter(trans3, bigTrans &amp; !reg_opp_party)</code></pre>
+<p>results in:</p>
+<ul>
+<li><p><strong>76,201</strong> transactions received by a county or party committee that were</p></li>
+<li>at least two times the average annual amount of contributions received by the recipient committee prior to the contribution. (NOTE: this is greater than a 5-yr window.) AND<br />
+</li>
+<li><p>were from a contributor that had given to the th recipient committee not more than twice ever. (NOTE: this is broader than looking just in time preceeding the contribution.)</p></li>
+</ul>
+<ol start="4" style="list-style-type: decimal">
+<li><strong>No more than one month after receiving the contribution(s), the county committee transferred a similar amount of money directly to a candidate’s campaign (i.e.not independent expenditures).</strong></li>
+</ol>
+<pre class="r"><code>tBigRare &lt;- tBigRare %&gt;% 
+  mutate(month_int = interval(DATE1_10, DATE1_10 + months(1))) 
+
+# table of outgoing transactions
+tBigRare[200]
+target_amount &lt;- tBigRare$AMOUNT_70[200]
+target_filer &lt;- tBigRare$FILER_NAME[200]
+month_int &lt;- interval(tBigRare$DATE1_10[200], 
+                      tBigRare$DATE1_10[200] + months(1))
+# filter only outgoing transactions coded as &quot;contributions&quot;
+trans4 &lt;- trans1 %&gt;% 
+  filter(TRANSACTION_CODE %in% c(&quot;F&quot;, &quot;H&quot;)) %&gt;%
+  filter(PURPOSE_CODE1_100 == &quot;CNTRB&quot;)
+
+test &lt;- trans4 %&gt;% 
+  filter(DATE1_10 %within% month_int &amp; FILER_NAME == target_filer)</code></pre>
+<p>results in:</p>
+<ul>
+<li><strong>22,071</strong> outgoing contributions made by county or party committees to any entity.</li>
+</ul>
 </div>
 
 
