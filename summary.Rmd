@@ -95,167 +95,48 @@ results in:
  - **`r formatC(nrow(tBigRare), big.mark=",") `** transactions received by a county or party committee that were  
  
  - at least two times the average annual amount of contributions received by the recipient committee prior to the contribution. (NOTE: this is greater than a 5-yr window.) AND  
- - were from a contributor that had given to the th recipient committee not more than twice ever. (NOTE: this is broader than looking just in time preceeding the contribution.)
+ - were from a contributor that had given to the th recipient committee not more than twice ever. (NOTE: this is broader than looking just in the time preceeding the contribution.)
 
  4) **No more than one month after receiving the contribution(s), the county committee transferred a similar amount of money directly to a candidate's campaign (i.e.not independent expenditures).**
 ```{r c4, message=FALSE, warning=FALSE, eval=FALSE}
-# add post-1-month interval 
-tBigRare <- tBigRare %>% 
-  mutate(month_int = interval(DATE1_10, DATE1_10 + months(1))) 
-
-# table of outgoing transactions
-tBigRare[200]
-target_amount <- tBigRare$AMOUNT_70[200]
-target_filer <- tBigRare$FILER_NAME[200]
-month_int <- interval(tBigRare$DATE1_10[200], 
-                      tBigRare$DATE1_10[200] + months(1))
-# filter only outgoing transactions coded as "contributions"
-trans4 <- trans1 %>% 
-  filter(TRANSACTION_CODE %in% c("F", "H")) %>%
-  filter(PURPOSE_CODE1_100 == "CNTRB") %>%
-  mutate(opp_party = paste(CORP_30, FIRST_NAME_40, MID_INIT_42, LAST_NAME_44),
-                           outDATE1_10 = DATE1_10) %>%
-  select(FILER_NAME, DATE1_10, TRANSACTION_CODE, AMOUNT_70, opp_party, outDATE1_10)
-
-combo <- full_join(tBigRare, trans4)
-combo <- data.table(combo)
-# test <- combo %>%
-#   mutate(plus30days = DATE1_10 + days(30)) %>%
-#   select(FILER_NAME, DATE1_10, TRANSACTION_CODE, AMOUNT_70, opp_party, plus30days, outDATE1_10) %>%
-#   arrange(FILER_NAME, DATE1_10) %>%
-#   group_by(FILER_NAME, DATE1_10) %>%
-#   filter()
-#   summarise(
-#     plus30days = plus30days,
-#     TRANSACTION_CODE = TRANSACTION_CODE,
-#     dailyIN = sum(is.na(outDATE1_10)),
-#     dialyOUT = sum(!is.na(outDATE1_10)),
-#     AMOUNT_70 = AMOUNT_70,
-#     outDATE1_10 = outDATE1_10)
-
-
-
-# --- http://stackoverflow.com/questions/30443844/extracting-event-types-from-last-21-day-window/30445961#30445961
-# --- the roll only captures the first instance
-df <- trans1 %>% filter(!is.na(FILER_NAME)) # remove 89 rows with NAs
-df <- df[225000:227000,] # to avoid first row with NAs
-df <- mutate(df, ID = rownames(df)) # add ID
-# create direction column of target transactions
-df[, direction := ifelse(TRANSACTION_CODE %in% inCodes, "in", 
-                         ifelse(TRANSACTION_CODE %in% outCodes, "out", NA))]
-setkey(setDT(df)[, DATE1_10 := as.IDate(DATE1_10, "%m/%d/%Y")], FILER_NAME, DATE1_10, direction)
-# group by filer, date, direction
-grouped <- df %>% group_by(FILER_NAME, DATE1_10, direction) %>%
-  summarise(count = n())
-# Create 2 temporary data sets per each activity
-in_temp <- grouped[direction == "in", .(FILER_NAME, DATE1_10)]
-setkey(in_temp, FILER_NAME, DATE1_10)
-out_temp <- grouped[direction == "out", .(FILER_NAME, DATE1_10, direction)]
-# Join by a rolling window of 21 to the sales temporary data set while checking conditions
-in_temp[out_temp, out_30 :=  as.logical(which(i.direction == "out")), 
-         roll = 30, by = .EACHI] # this looks good TODO: confirm
-#---
-
-# -- try overlap
 # http://stackoverflow.com/questions/23371747/range-join-data-frames-specific-date-column-with-date-ranges-intervals-in-r/23377309#23377309
-
-
-# df <- trans1 %>% filter(!is.na(FILER_NAME)) # remove 89 rows with NAs
-# df <- df[225000:227000,] # to avoid first row with NAs
-# # create direction column of target transactions
-# df[, direction := ifelse(TRANSACTION_CODE %in% inCodes, "in", 
-#                          ifelse(TRANSACTION_CODE %in% outCodes, "out", NA))]
-# # group by filer, date, direction
-# grouped <- df %>% group_by(FILER_NAME, DATE1_10, direction) %>%
-#   summarise(count = n(), TotAmount = sum(AMOUNT_70)) %>% # drop NAs in direction
-#   filter(!is.na(direction))
-# # add 30 day end date
-# grouped <- grouped %>% mutate(end_30 = DATE1_10 - days(30))
-# # create reference table
-# justIns <- grouped %>% filter(direction == "in")
-# justOuts <- grouped %>% filter(direction == "out")
-# 
-# justIns[, `:=`(DATE1_102 = DATE1_10, id = .I)]
-# setkey(justOuts, FILER_NAME, end_30, DATE1_10)
-# ans = foverlaps(justIns, justOuts, by.x=c("FILER_NAME", "DATE1_10", "DATE1_102"))[, DATE1_102 := NULL]
-# ans = ans[order(id, TotAmount)][, N := 1:.N, by=list(FILER_NAME, DATE1_10, direction, id)]
-# # ans = dcast.data.table(ans, id+FILER_NAME+DATE1_10 ~ direction+N, value.var="TotAmount")
-
 ## THIS IS CLOSE ##
-df <- trans1[225000:227000,] # to avoid first row with NAs
+start <- Sys.time()
+# df <- trans1[225000:227000,] # to avoid first row with NAs
 # df <- trans1
-df <- mutate(df, ID = rownames(df)) # add ID
+df <- setDT(tBigRare) #TODO: need to set ID in first step to make this work
+df <- mutate(df, transID = rownames(df)) # add ID
 # create direction column of target transactions
 df[, direction := ifelse(TRANSACTION_CODE %in% inCodes, "in", 
                          ifelse(TRANSACTION_CODE %in% outCodes, "out", NA))]
 df <- df %>% filter(!is.na(direction)) %>%
   mutate(end_30 = DATE1_10 - days(30)) %>%
-  select(FILER_NAME, DATE1_10, end_30, direction, TRANSACTION_CODE, AMOUNT_70, ID)
+  select(FILER_NAME, DATE1_10, end_30, direction, TRANSACTION_CODE, AMOUNT_70, transID)
 # create reference table
 justIns <- df %>% filter(direction == "in")
-justOuts <- df %>% filter(direction == "out")
-
+justOuts <- df %>% filter(direction == "out") #TODO: need to connect this to trans1
 justIns[, `:=`(DATE1_102 = DATE1_10, id = .I)]
 setkey(justOuts, FILER_NAME, end_30, DATE1_10)
 
-start <- Sys.time()
 ans = foverlaps(justIns, justOuts, by.x=c("FILER_NAME", "DATE1_10", "DATE1_102"))[, DATE1_102 := NULL]
-end <- Sys.time()
-end - start
 
 flagged <- ans %>% filter(!is.na(direction)) %>%
-  group_by(i.ID, FILER_NAME, DATE1_10, TRANSACTION_CODE) %>%
+  # group_by(i.transID, FILER_NAME, TRANSACTION_CODE) %>% # this is grouped by outgoing transaction type
+  group_by(i.transID, FILER_NAME) %>%
   summarise(
-            count = n(),
-            totalOut = sum(AMOUNT_70))
+            nOutTrans = n(),
+            totalOut = sum(AMOUNT_70)) 
+
+flagged <- inner_join(df, flagged, by = "transID")
+
+flagged <- flagged %>% select(-c(FILER_NAME.y, direction, end_30))
+names(flagged) <- c("transID","FILER_NAME", "DATE1_10","IN_TRANSACTION_CODE",
+                    "AMOUNT_70","nOutTrans","totalOut" )
+
+end <- Sys.time()
+end - start
 View(flagged)
-
-# --
-
-
-
-## data.table way  by making date reference table NOTE THIS TAKES TOO LONG
-  # http://stackoverflow.com/questions/23392699/data-table-aggregation-with-rolling-subset-on-date
-  # http://stackoverflow.com/questions/24397299/rolling-sum-by-another-variable-in-r
-
-# 1 Load data.table and convert to data.table object
-start <- Sys.time()
-# data <- tail(trans1,1000) # to avoid first row with NAs
-data <- tail(trans1,-1) # to avoid first row with NAs
-setDT(data)[,ID2:=.GRP,by=c("FILER_NAME")]
-# 2 Build reference table
-Ref <- data[,list(Compare_Value=list(I(AMOUNT_70)),Compare_Date=list(I(DATE1_10))), by=c("ID2")]
-# 3 Use mapply to get last seven days of value by id
-data[,Roll.Val := mapply(RD = DATE1_10,NUM=ID2, function(RD, NUM) {
-                  d <- as.numeric(Ref$Compare_Date[[NUM]] - RD)
-                  sum((d <= 0 & d >= -7)*Ref$Compare_Value[[NUM]])})]
-end <- Sys.time()
-end - start
-  
-#OR, similar, but without count
-start <- Sys.time()
-data <- tail(trans1,-1) # to avoid first row with NAs
-data[, Rolling7DaySum := {
-         d <- data$DATE1_10 - DATE1_10
-         sum(data$AMOUNT_70[FILER_NAME == data$FILER_NAME & d <= 0 & d >= -7])
-       },
-     by = list(DATE1_10, FILER_NAME)]
-end <- Sys.time()
-end - start
-  
-  #http://stackoverflow.com/questions/30443844/extracting-event-types-from-last-21-day-window/30445961#30445961  
-  
-test <- tBigRare[DATE1_10 %within% trans4[,DATE1_10]]
-test <- tBigRare[trans4, "test" := "foo", by = FILER_NAME]
-
-DT1[DT2, v1  := ifelse(id1==3, i.v1, v1), nomatch=0]
-
-tIn <- tBigRare %>% select(FILER_NAME, DATE1_10, TRANSACTION_CODE, AMOUNT_70)
-tOut <- trans4 %>% select(FILER_NAME, DATE1_10, TRANSACTION_CODE, AMOUNT_70) 
-%>%
-  mutate(month_int = interval(DATE1_10, DATE1_10 + months(1))) 
-test <- # count how many tOut records match interval and filer_name of tIn
-
+table(flagged$transID)
 
 ```
 results in:  
