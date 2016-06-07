@@ -40,11 +40,11 @@ Data profile (all years):
 ## Applying the "Sugarman Standard""
 Criteria:  
 
- 1) **The recipient is a county committee or party committee**  
+ 1) **The recipient is a county committee or party committee**  (Committe Type = "3","3H", "6", "6H")
 ```{r c1, message=FALSE, warning=FALSE, eval=FALSE}
 # create table of just county or party committees
 cmtes <- subset(filers, FILER_TYPE == "COMMITTEE" 
-                  & !COMMITTEE_TYPE %in% c("1", "2", "9", "9B", "9U"))
+                  & COMMITTEE_TYPE %in% c("3","3H", "6", "6H"))
 table(cmtes$COMMITTEE_TYPE)
 # subset transactions matching just filers in committees table
 trans1 <- trans[cmtes]                                                            # BUG: this may create NAs in first column
@@ -52,8 +52,8 @@ trans1 <- trans1[, c(1:32), with=FALSE]
 ```
 results in:  
 
-- **`r formatC(nrow(cmtes), big.mark=",") `** filers classed as county or party committees
-- **`r formatC(nrow(trans), big.mark=",") `** transactions matching such committees
+- **`r formatC(nrow(cmtes), big.mark=",") `** filers classed as CONSTITUTED COUNTY or PARTY STATE or associated housekeeping.
+- **`r formatC(nrow(trans1), big.mark=",") `** transactions matching such entities.
 
  2) **The contribution amounted to at least two times the average annual amount of contributions received by the recipient county committee in the five years prior to the contribution** 
 ```{r c2, message=FALSE, warning=FALSE, eval=FALSE}
