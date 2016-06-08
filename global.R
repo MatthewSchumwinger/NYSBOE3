@@ -19,12 +19,10 @@
 # trans <- trans[-unlist(eti), ]
 # saveRDS(trans, "data/trans.Rds")
 
-trans <- readRDS("data/trans.Rds")
-# trans <- readRDS("data/s.trans.Rds")
+# trans <- readRDS("data/trans.Rds")
+trans <- readRDS("data/s.trans.Rds")
 # trans <- readRDS("data/s.trans1000.Rds")
 filers <- readRDS("data/filers.Rds") 
-
-
 
 ## remove bad characters
 # trans$CORP_30 <- stringr::str_replace(trans$CORP_30, "[:punct:]", "-")
@@ -64,6 +62,12 @@ names(filers) <- filer_cols[ ,1]
 
 
 ######## mungin
+
+## remove multibyte non-ASCII characters
+trans$CORP_30 <- iconv(trans$CORP_30, "latin1", "ASCII", sub="~")
+trans$FIRST_NAME_40 <- iconv(trans$FIRST_NAME_40, "latin1", "ASCII", sub="~")
+trans$MID_INIT_42 <- iconv(trans$MID_INIT_42, "latin1", "ASCII", sub="~")
+trans$LAST_NAME_44 <- iconv(trans$LAST_NAME_44, "latin1", "ASCII", sub="~")
 
 ## add transaction ID
 trans$tID <- rownames(trans)

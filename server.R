@@ -47,7 +47,8 @@ shinyServer(function(input, output, session) {
     df
     },
     filter = "top",
-    options = list(searching = FALSE)
+    # options = list(searching = FALSE)
+    options = list(searching = TRUE)
     ))
 
   # Show the first "n" observations

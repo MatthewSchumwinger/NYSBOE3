@@ -57,7 +57,8 @@ get_allreports <- function(){
     "~/Dropbox/Analytics-Consulting/Clients/QRI/campaign_finance/raw_data/ALL_REPORTS/ALL_REPORTS.txt"
   allreports <- readr::read_delim(path, col_names = FALSE, escape_backslash = TRUE,
                                   delim = ",", escape_double = FALSE,
-                                col_types = "cccccccccccccccccccccccccccccc")
+                                col_types = "cccccccccccccccccccccccccccccc",
+                                locale = readr::locale(encoding = "ASCII"))
   
   allreports
 }
