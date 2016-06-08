@@ -1,7 +1,7 @@
 ---
 title: "Summary: Criteria Set A"
 author: "Matt Schumwinger, Big Lake Data LLC"
-date: "June 7, 2016"
+date: "June 8, 2016"
 output: html_document
 ---
 
@@ -13,6 +13,7 @@ library(data.table)
 library(stringr)
 library(lubridate)
 library(dplyr)
+library(knitr)
 
 filers <- data.table(filers, key = "FILER_ID")
 trans <- data.table(trans, key = "FILER_ID")
@@ -20,44 +21,53 @@ trans <- data.table(trans, key = "FILER_ID")
 trans <- trans[DATE1_10 >= lubridate::ymd(19990101) 
                  & DATE1_10 < lubridate::ymd(20170101) ,]
 
+nTrans <- formatC(nrow(trans), big.mark=",")
+nFilers <- formatC(nrow(filers), big.mark=",")
+
 # ----- helpers -----
 ante5yrs <- function(date) {
   date - lubridate::years(5)
 }
-inCodes <- c("A","B","C","D","E","G")  # incoming contribution codes
-outCodes <- c("F", "H")  # outgoing contribution codes
+# inCodes <- c("A","B","C","D","E","G")  # incoming contribution codes
+# outCodes <- c("F", "H")  # outgoing contribution codes
 ```
 
-```{r load workspace}
+```{r load workspace, include=FALSE}
 load("data/sugarman.Rds")
 ```
 
-Data profile (all years):  
+### Applying the four-part "Sugarman Standard"
 
-- **`r formatC(nrow(trans), big.mark=",") `** transactions
-- **`r formatC(nrow(filers), big.mark=",") `** filers
+NYSBOE data profile (all years):  
 
-## Applying the "Sugarman Standard""
-Criteria:  
-
- 1) **The recipient is a county committee or party committee**  (Committe Type = "3","3H", "6", "6H")
-```{r c1, message=FALSE, warning=FALSE, eval=FALSE}
+- **`r nTrans `** transactions
+- **`r nFilers `** filers
+  
+**Criterion #1: The recipient is a county committee or party committee.**
+```{r c1, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
 # create table of just county or party committees
 cmtes <- subset(filers, FILER_TYPE == "COMMITTEE" 
                   & COMMITTEE_TYPE %in% c("3","3H", "6", "6H"))
 table(cmtes$COMMITTEE_TYPE)
 # subset transactions matching just filers in committees table
-trans1 <- trans[cmtes]                                                            # BUG: this may create NAs in first column
+trans1 <- trans[cmtes] 
+# prune "empty" rows added from join
+trans1 <- filter(trans1, !is.na(FILER_NAME))
 trans1 <- trans1[, c(1:32), with=FALSE]
+
+nCmtes <- formatC(nrow(cmtes), big.mark=",")
+tableCmtes <- data.frame(table(cmtes$COMMITTEE_TYPE))
+names(tableCmtes) <- c("Committee Type", "Count")
+nTrans1 <- formatC(nrow(trans1), big.mark=",") 
 ```
-results in:  
 
-- **`r formatC(nrow(cmtes), big.mark=",") `** filers classed as CONSTITUTED COUNTY or PARTY STATE or associated housekeeping.
-- **`r formatC(nrow(trans1), big.mark=",") `** transactions matching such entities.
+- **`r nCmtes `** "middleman" filers classed as CONSTITUTED COUNTY or PARTY STATE or associated housekeeping entities (Committee Type = "3","3H", "6", "6H"). 
+- **`r nTrans1`** transactions matching such filing entities.
 
- 2) **The contribution amounted to at least two times the average annual amount of contributions received by the recipient county committee in the five years prior to the contribution** 
-```{r c2, message=FALSE, warning=FALSE, eval=FALSE}
+**Criterion #2: The contribution amounted to at least two times the average annual amount of contributions received by the recipient county committee in the five years prior to the contribution.** 
+```{r c2, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
 # subset trans by only incoming contribution codes
+inCodes <- c("A","B","C","D","E","G")  # incoming contribution codes
 trans2 <- trans1 %>% filter(TRANSACTION_CODE %in% inCodes)
 
 # calculate cumulative average of trans for that filer prior to date of trans
@@ -70,39 +80,36 @@ trans2 <- trans2 %>%
 
 tBig <- filter(trans2, bigTrans)
 
+nTrans2 <- formatC(nrow(tBig), big.mark=",")
 ```
-results in:  
 
- - **`r formatC(nrow(tBig), big.mark=",") `** transactions received by a county or party committee that were at least two times the average annual amount of contributions received by the recipient committee prior to the contribution. (NOTE: this is greater than a 5-yr window.)
+ - **`r nTrans2 `** in-coming transactions (TRANSACTION CODE: "A","B","C","D","E","G") received by a  "middleman" filer (classed as CONSTITUTED COUNTY or PARTY STATE or associated housekeeping) that were at least two times the average amount of contributions received by that "middleman" prior to the transaction. (NOTE: this is broader than a 5-year window.)
 
- 3) **The contributor had given to the recipient committee no more than twice in the past**
-```{r c3, message=FALSE, warning=FALSE, eval=FALSE}
-# one-off name fix
-trans2[FILER_NAME == "*PHELPS DEMOCRATIC COMMITTEE", 
-       FILER_NAME := "PHELPS DEMOCRATIC COMMITTEE"]
+**Criterion #3: The contributor had given to the recipient committee no more than twice in the past.**
+```{r c3, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
 
 # create "oppositeParty" field
-trans3 <- trans2 %>%                                                            # TODO: condition this on time before contribution 
+trans3 <- trans2 %>%                                                            # TODO: condition this on time before contribution
   mutate(opp_party = paste(CORP_30, FIRST_NAME_40, MID_INIT_42, LAST_NAME_44)) 
 
 # count contributions by opposite party
-count_by_opp_part <- trans3 %>%
+count_by_opp_part <- trans3 %>%   # TODO: inlcude and document this table in app
   group_by(FILER_NAME, opp_party) %>% 
   summarise(tot_from_opp_party = n())
-trans3 <- left_join(trans3, count_by_opp_part, by = c("FILER_NAME", "opp_party")) #TODO: work on encoding warning message
+trans3 <- left_join(trans3, count_by_opp_part, by = c("FILER_NAME", "opp_party")) 
 trans3 <- trans3 %>% mutate(rare_opp_party = tot_from_opp_party <= 3)
-# table(trans3$reg_opp_party) 
+
 tBigRare <- filter(trans3, bigTrans & rare_opp_party)
+
+ntBigRare <- formatC(nrow(tBigRare), big.mark=",")
 ```
-results in:  
 
- - **`r formatC(nrow(tBigRare), big.mark=",") `** transactions received by a county or party committee that were:  
- 
- - at least two times the average annual amount of contributions received by the recipient committee prior to the contribution. (NOTE: this is greater than a 5-yr window.) AND  
- - were from a contributor that had given to the recipient committee not more than twice ever else. (NOTE: this is broader than looking just in the time preceeding the contribution.)
+ - **`r ntBigRare `** transactions received by a "middleman" filer (classed as CONSTITUTED COUNTY or PARTY STATE or associated housekeeping) that were:  
+    - at least two times the average amount of contributions received by the "middleman" prior to the contribution. (NOTE: this is greater than a 5-yr window.) ***AND***  
+    - from a contributor that had given to the "middleman" not more than twice ever else. (NOTE: this is broader than looking just in the time preceding the contribution.)
 
- 4) **No more than one month after receiving the contribution(s), the county committee transferred a similar amount of money directly to a candidate's campaign (i.e., not independent expenditures).**
-```{r c4, message=FALSE, warning=FALSE, eval=FALSE}
+**Criterion #4: No more than one month after receiving the contribution(s), the county committee transferred a similar amount of money directly to a candidate's campaign (i.e., not independent expenditures).**
+```{r c4, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
 
 df <- setDT(tBigRare)                                                           
                                                                                 
@@ -113,12 +120,14 @@ df <- df %>% filter(!is.na(direction)) %>%
   mutate(end_30 = DATE1_10 - days(30)) %>%
   select(FILER_NAME, DATE1_10, end_30, direction, TRANSACTION_CODE, AMOUNT_70, tID)
 
-# create reference tables
-justIns <- df %>% filter(direction == "in")                                       # this should be redundent
+# create temp tables
+justIns <- df  # %>% filter(direction == "in") # this is redundent
+
 justOuts <- trans1 
+outCodes <- c("F", "H")  # outgoing contribution codes
 justOuts[, direction := ifelse(TRANSACTION_CODE %in% inCodes, "in",               # TODO: refactor this to just dplyr for both df and trans1
                          ifelse(TRANSACTION_CODE %in% outCodes, "out", NA))]
-justOuts <- justOuts %>% filter(!is.na(direction)) %>%
+justOuts <- justOuts %>% filter(direction == "out") %>% 
   mutate(end_30 = DATE1_10 - days(30)) %>%
   select(FILER_NAME, DATE1_10, end_30, direction, TRANSACTION_CODE, AMOUNT_70, tID)
 
@@ -127,7 +136,8 @@ setkey(justOuts, FILER_NAME, end_30, DATE1_10)
 
 ans = foverlaps(justIns, justOuts, by.x=c("FILER_NAME", "DATE1_10", "DATE1_102"))[, DATE1_102 := NULL]
 
-flagged <- ans %>% filter(!is.na(direction)) %>%
+flagged <- ans %>% 
+  filter(!is.na(direction)) %>% # filters zero rows out
   # group_by(i.tID, FILER_NAME, TRANSACTION_CODE) %>% # this is grouped by outgoing transaction type
   group_by(i.tID, FILER_NAME) %>%
   summarise(
@@ -137,18 +147,20 @@ flagged <- ans %>% filter(!is.na(direction)) %>%
 
 flagged <- inner_join(df, flagged, by = "tID")
 
-flagged <- flagged %>% select(-c(FILER_NAME.y, direction, end_30, i.tID))
+flagged <- flagged %>% select(-c(FILER_NAME.y, direction, end_30, i.tID, DATE1_102, id))
 names(flagged) <- c("tID","FILER_NAME", "DATE1_10","IN_TRANSACTION_CODE",
                     "AMOUNT_70","nOutTrans","totalOut" )
-```
-results in:  
 
- - **`r formatC(nrow(flagged), big.mark=",") `** incoming contributions to a county or party committee where that comittee made an outgoing contribution within 30 days. (NOTE: this is not conditioned on recipient type or "similar amount")
+nFlagged <- formatC(nrow(flagged), big.mark=",")
+```
+
+ - **`r nFlagged `** incoming contributions (TRANSACTION CODE: "A","B","C","D","E","G") to a "middleman" filer (classed as CONSTITUTED COUNTY or PARTY STATE or associated housekeeping) where that "middleman" made an outgoing contribution (TRANSACTION CODE: "F", "H") within 30 days. (NOTE: this is not conditioned on recipient type (i.e., "candidates campaign") or "similar amount.")
 
 ```{r save workspace, eval=FALSE, include=FALSE}
 ## ---- save workspace ---
-rm(ans, df, justIns, justOuts)
+rm(ans, df, justIns, justOuts, cmtes, trans, trans1, trans2, trans3, tBig, tBigRare)
 save.image("data/sugarman.Rds")
+saveRDS(flagged, "data/flaggedA.Rds")
 
 path <- paste0("data/flagged_", Sys.Date(), ".csv")
 write.csv(flagged, path, row.names = F)
