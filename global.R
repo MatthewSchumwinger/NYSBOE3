@@ -18,8 +18,10 @@
 # saveRDS(pruned_trans, "data/pruned_trans.Rds")            # prune these errors from dataset
 # trans <- trans[-unlist(eti), ]
 # saveRDS(trans, "data/trans.Rds")
+# saveRDS(trans, "data/trans~.Rds") # data with multibyte characters removed
 
-trans <- readRDS("data/trans.Rds")
+# trans <- readRDS("data/trans.Rds")
+trans <- readRDS("data/trans~.Rds") # data with multibyte characters removed
 # trans <- readRDS("data/s.trans.Rds")
 # trans <- readRDS("data/s.trans1000.Rds")
 filers <- readRDS("data/filers.Rds") 
