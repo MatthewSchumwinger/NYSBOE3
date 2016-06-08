@@ -19,10 +19,10 @@
 # trans <- trans[-unlist(eti), ]
 # saveRDS(trans, "data/trans.Rds")
 
-trans <- readRDS("data/trans.Rds")
-# trans <- readRDS("data/s.trans.Rds")
-# trans <- readRDS("data/s.trans1000.Rds")
+# trans <- readRDS("data/trans.Rds")
+trans <- readRDS("data/s.trans.Rds")
 filers <- readRDS("data/filers.Rds") 
+flaggedA <- readRDS("data/flaggedA.Rds")
 
 ## remove bad characters
 # trans$CORP_30 <- stringr::str_replace(trans$CORP_30, "[:punct:]", "-")
@@ -114,6 +114,11 @@ list_for_dropdown <- function(column, add.choose.one = FALSE) {
 l_filer_type <- list_for_dropdown(filers$FILER_TYPE)
 l_status <- list_for_dropdown(filers$STATUS)
 l_COMMITTEE_TYPE <- list_for_dropdown(filers$COMMITTEE_TYPE)
+
+# -- for FLAGGED data
+l_IN_TRANSACTION_CODE <- list_for_dropdown(flaggedA$IN_TRANSACTION_CODE)
+# l_E_YEAR <- list_for_dropdown(trans$E_YEAR)
+
 
 # -- for TRANSACTIONS data
 l_TRANSACTION_CODE <- list_for_dropdown(trans$TRANSACTION_CODE)

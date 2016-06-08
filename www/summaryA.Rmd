@@ -1,5 +1,5 @@
 ---
-title: "Summary: Criteria Set A"
+title: 'Summary: Criteria Set A'
 author: "Matt Schumwinger, Big Lake Data LLC"
 date: "June 8, 2016"
 output: html_document
@@ -160,7 +160,7 @@ nFlagged <- formatC(nrow(flagged), big.mark=",")
 ## ---- save workspace ---
 rm(ans, df, justIns, justOuts, cmtes, trans, trans1, trans2, trans3, tBig, tBigRare)
 save.image("data/sugarman.Rds")
-saveRDS(flagged, "data/flaggedA.Rds")
+saveRDS(setDT(flagged), "data/flaggedA.Rds")
 
 path <- paste0("data/flagged_", Sys.Date(), ".csv")
 write.csv(flagged, path, row.names = F)

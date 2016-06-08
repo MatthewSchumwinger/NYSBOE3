@@ -82,6 +82,43 @@ shinyUI(navbarPage(
            )
   ),
 
+  navbarMenu("Flagged Set A",
+    tabPanel("data",
+             
+             fluidPage(
+               titlePanel("Flagged Set A"),
+               h5("(for all election years)"),
+               
+               # Create a new Row in the UI for selectInputs
+               fluidRow(
+                 column(4,
+                        selectInput("IN_TRANSACTION_CODE",
+                                    "IN Transaction code:",
+                                    c("All",
+                                      l_IN_TRANSACTION_CODE))
+                 )),
+               #   column(4,
+               #          selectInput("E_YEAR",
+               #                      "E_Year:",
+               #                      c("All",
+               #                        l_E_YEAR))
+               #   )
+               # ),
+               # Create a new row for the table.
+               fluidRow(
+                 DT::dataTableOutput("table_flaggedA")
+               ),
+               
+               mycite
+             )
+    ),
+    
+    tabPanel("Summary",
+             img(src='summaryA.pdf', width = "100%")
+
+    )
+  ),
+  
   tabPanel("Detailed Transaction View",
            fluidPage(
              sidebarLayout(

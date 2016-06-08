@@ -50,6 +50,23 @@ shinyServer(function(input, output, session) {
     # options = list(searching = FALSE)
     options = list(searching = TRUE)
     ))
+  
+  output$table_flaggedA <- DT::renderDataTable(DT::datatable({
+    df <- flaggedA 
+    # if (input$E_YEAR != "All") {
+    #   df <- df[df$E_YEAR == input$E_YEAR,]
+    # }
+    if (input$IN_TRANSACTION_CODE != "All") {
+      df <- df[df$IN_TRANSACTION_CODE == input$IN_TRANSACTION_CODE, ]
+    }
+    
+    # df <- df[ , t_cols, with = FALSE]
+    df
+  },
+  filter = "top",
+  # options = list(searching = FALSE)
+  options = list(searching = TRUE)
+  ))
 
   # Show the first "n" observations
   output$trans_view <- renderPrint({
