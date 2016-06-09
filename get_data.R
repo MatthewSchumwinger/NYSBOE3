@@ -74,6 +74,9 @@ get_allreports <- function(){
   ## change to date format¬
   allreports$X6 <- lubridate::mdy(allreports$X6)
   
+  ## add transaction ID
+  allreports$tID <- rownames(allreports)
+  
   allreports
 }
 allreports <- get_allreports()

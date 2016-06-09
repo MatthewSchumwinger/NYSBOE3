@@ -126,21 +126,21 @@ $(document).ready(function () {
 <h3>Applying the four-part “Sugarman Standard”</h3>
 <p>NYSBOE data profile (all years):</p>
 <ul>
-<li><strong>9,968,197</strong> transactions</li>
+<li><strong>9,969,284</strong> transactions</li>
 <li><strong>36,525</strong> filers</li>
 </ul>
 <p><strong>Criterion #1: The recipient is a county committee or party committee.</strong></p>
 <ul>
 <li><strong>365</strong> “middleman” filers classed as CONSTITUTED COUNTY or PARTY STATE or associated housekeeping entities (Committee Type = “3”,“3H”, “6”, “6H”).</li>
-<li><strong>685,388</strong> transactions matching such filing entities.</li>
+<li><strong>685,451</strong> transactions matching such filing entities.</li>
 </ul>
 <p><strong>Criterion #2: The contribution amounted to at least two times the average annual amount of contributions received by the recipient county committee in the five years prior to the contribution.</strong></p>
 <ul>
-<li><strong>33,330</strong> in-coming transactions (TRANSACTION CODE: “A”,“B”,“C”,“D”,“E”,“G”) received by a “middleman” filer (classed as CONSTITUTED COUNTY or PARTY STATE or associated housekeeping) that were at least two times the average amount of contributions received by that “middleman” prior to the transaction. (NOTE: this is broader than a 5-year window.)</li>
+<li><strong>32,352</strong> in-coming transactions (TRANSACTION CODE: “A”,“B”,“C”,“D”,“E”,“G”) received by a “middleman” filer (classed as CONSTITUTED COUNTY or PARTY STATE or associated housekeeping) that were at least two times the average amount of contributions received by that “middleman” prior to the transaction. (NOTE: this is broader than a 5-year window.)</li>
 </ul>
 <p><strong>Criterion #3: The contributor had given to the recipient committee no more than twice in the past.</strong></p>
 <ul>
-<li><strong>13,621</strong> transactions received by a “middleman” filer (classed as CONSTITUTED COUNTY or PARTY STATE or associated housekeeping) that were:
+<li><strong>13,380</strong> transactions received by a “middleman” filer (classed as CONSTITUTED COUNTY or PARTY STATE or associated housekeeping) that were:
 <ul>
 <li>at least two times the average amount of contributions received by the “middleman” prior to the contribution. (NOTE: this is greater than a 5-yr window.) <strong><em>AND</em></strong><br />
 </li>
@@ -149,8 +149,18 @@ $(document).ready(function () {
 </ul>
 <p><strong>Criterion #4: No more than one month after receiving the contribution(s), the county committee transferred a similar amount of money directly to a candidate’s campaign (i.e., not independent expenditures).</strong></p>
 <ul>
-<li><strong>11,639</strong> incoming contributions (TRANSACTION CODE: “A”,“B”,“C”,“D”,“E”,“G”) to a “middleman” filer (classed as CONSTITUTED COUNTY or PARTY STATE or associated housekeeping) where that “middleman” made an outgoing contribution (TRANSACTION CODE: “F”, “H”) within 30 days. (NOTE: this is not conditioned on recipient type (i.e., “candidates campaign”) or “similar amount.”)</li>
+<li><strong>11,398</strong> incoming contributions (TRANSACTION CODE: “A”,“B”,“C”,“D”,“E”,“G”) to a “middleman” filer (classed as CONSTITUTED COUNTY or PARTY STATE or associated housekeeping) where that “middleman” made an outgoing contribution (TRANSACTION CODE: “F”, “H”) within 30 days. (NOTE: this is not conditioned on recipient type (i.e., “candidates campaign”) or “similar amount.”)</li>
 </ul>
+<hr />
+<div id="notes-to-data-structure" class="section level5">
+<h5>Notes to data structure:</h5>
+<ul>
+<li><strong>tID</strong> is the unique ID applied to each transaction. Because this is consistant accross all subsets, you can use this to search for a particular record accross tabs.</li>
+<li><strong>IN_TRANSACTION_CODE</strong> is the same as <strong>TRANSACTION_CODE</strong>, but named differently because this subset holds only “in-bound” transactions.</li>
+<li><strong>nOutTrans</strong> the count of “out-bound” transactions made by the same filing entity within a post 30-day period of the “in-bound” transaction.</li>
+<li><strong>totalOut</strong> the sum of “out-bound” transaction <strong>AMOUNT_70</strong> made by the same filing entity within a post 30-day period of the “in-bound” transaction.</li>
+</ul>
+</div>
 </div>
 
 

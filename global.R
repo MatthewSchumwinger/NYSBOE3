@@ -10,26 +10,17 @@
 # saveRDS(head_reports, "data/head_reports.Rds")
 # trans <- readRDS("data/head_reports.Rds")
 
-# -- handle parsing errors in trans file (errors in filers file solved in get_data() function)
-# trans <- allreports
-# err_trans <- readr::problems(trans)
-# eti <- err_trans[err_trans$expected == "30 columns", 1]   # index of errors that
-# pruned_trans <- trans[unlist(eti), ]                      # result in shifted columns.
-# saveRDS(pruned_trans, "data/pruned_trans.Rds")            # prune these errors from dataset
-# trans <- trans[-unlist(eti), ]
-# saveRDS(trans, "data/trans.Rds")
 
-# 
+# saveRDS(allreports, "data/trans.Rds")
+# trans.s.year <- allreports %>% filter(X4 %in% c(2008,2010,2012,2014,2016))
+# saveRDS(trans.s.year, "data/trans.s.year.Rds")
 
-trans <- readRDS("data/trans.Rds")
-# trans <- readRDS("data/s.trans.Rds")
+# trans <- readRDS("data/trans.Rds")
+trans <- readRDS("data/trans.s.year.Rds")
+
 filers <- readRDS("data/filers.Rds") 
 flaggedA <- readRDS("data/flaggedA.Rds")
 flaggedB <- readRDS("data/flaggedB.Rds")
-
-## remove bad characters
-# trans$CORP_30 <- stringr::str_replace(trans$CORP_30, "[:punct:]", "-")
-##
 
 # --- field names
 f <- function() {
@@ -54,7 +45,9 @@ t <- function() {
 }
 trans_cols <- t()
 
-names(trans) <- trans_cols[ ,1]
+trans_cols <- c(trans_cols[ ,1], "tID")
+names(trans) <- trans_cols
+
 names(filers) <- filer_cols[ ,1]
 
 # -- subset transaction data for easier handling
@@ -66,9 +59,6 @@ names(filers) <- filer_cols[ ,1]
 
 ######## munging
 
-## add transaction ID
-trans$tID <- rownames(trans)
-
 ## add filer name to filer ID
 filers <- data.table::as.data.table(filers)
 data.table::setkey(filers, FILER_ID)
@@ -79,13 +69,11 @@ data.table::setkey(trans, FILER_ID)
 
 trans <- merge(trans, filers, by = "FILER_ID", all.x = TRUE)
 trans <- trans[, !c(33:43), with=FALSE]
-order <- c("FILER_NAME", names(trans))
-order <- order[-33]
+order <- c("tID", "FILER_NAME", names(trans))
+order <- order[-c(33:34)]
 data.table::setcolorder(trans, neworder = order)
 
 ########## end mungin
-
-
 
 # -- drop down lists
 list_for_dropdown <- function(column, add.choose.one = FALSE) {

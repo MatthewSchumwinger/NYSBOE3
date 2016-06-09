@@ -85,7 +85,8 @@ shinyServer(function(input, output, session) {
 
   # Show the first "n" observations
   output$trans_view <- renderPrint({
-    rec <- trans[input$t_rownum,]
+    # rec <- trans[input$t_rownum,]
+    rec <- trans[tID == input$tID]
     str(rec)
   },
   width = 90)

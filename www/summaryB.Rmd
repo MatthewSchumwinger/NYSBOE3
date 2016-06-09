@@ -112,6 +112,6 @@ save.image("data/bird.Rds")
 saveRDS(setDT(flaggedB), "data/flaggedB.Rds")
 
 path <- paste0("data/flaggedB_", Sys.Date(), ".csv")
-write.csv(flagged, path, row.names = F)
+write.csv(flaggedB, path, row.names = F)
 
 ```

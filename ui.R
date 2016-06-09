@@ -49,9 +49,9 @@ shinyUI(navbarPage(
   tabPanel("Transactions",
 
            fluidPage(
-             titlePanel("All Transactions"),
-             # h5("(for election years 2008, 2010, 2012, 2014)"),
-             h5("(for all election years)"),
+             titlePanel("Transactions"),
+             h5("(for election years 2008, 2010, 2012, 2014, 2016)"),
+             # h5("(for all election years)"),
 
              # Create a new Row in the UI for selectInputs
              fluidRow(
@@ -87,7 +87,7 @@ shinyUI(navbarPage(
     tabPanel("data",
              
              fluidPage(
-               titlePanel("Flagged Set A"),
+               titlePanel("Flagged Set A: the 'Sugarman Standard'"),
                h5("(for all election years)"),
                
                # Create a new Row in the UI for selectInputs
@@ -108,9 +108,11 @@ shinyUI(navbarPage(
              )
     ),
     
-    tabPanel("Summary",
+    tabPanel("summary",
              img(src='summaryA.pdf', width = "100%")
-
+    ),
+    tabPanel("notes to data structure",
+             img(src='summaryA-2.pdf', width = "100%")
     )
   ),
   
@@ -118,7 +120,7 @@ shinyUI(navbarPage(
              tabPanel("data",
                       
                       fluidPage(
-                        titlePanel("Flagged Set B"),
+                        titlePanel("Flagged Set B: Bird's filtering steps"),
                         h5("(for all election years)"),
                         
                         # Create a new Row in the UI for selectInputs
@@ -139,9 +141,8 @@ shinyUI(navbarPage(
                       )
              ),
              
-             tabPanel("Summary",
+             tabPanel("summary",
                       img(src='summaryB.pdf', width = "100%")
-                      
              )
   ),
   
@@ -149,10 +150,10 @@ shinyUI(navbarPage(
            fluidPage(
              sidebarLayout(
                sidebarPanel(
-                 numericInput("t_rownum", "Row # of transaction record to view:", 1),
+                 numericInput("tID", "tID of transaction record to view:", 1),
 
-                 helpText("Note: the row # is the left-most column on the
-                        'Transactions' tab.")
+                 helpText("Note: the tID is the left-most column on the
+                        transactions datasets.")
                ),
                mainPanel(
                  h4("Full Transaction Record"),

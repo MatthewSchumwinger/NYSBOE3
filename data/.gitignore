@@ -9,3 +9,6 @@ flagged2_2016-06-07.csv
 flagged_2016-06-07.csv
 trans~.Rds
 flaggedA.Rds
+trans.s.year.Rds
+bird.Rds
+flaggedB.Rds

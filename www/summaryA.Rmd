@@ -2,7 +2,7 @@
 title: 'Summary: Criteria Set A'
 author: "Matt Schumwinger, Big Lake Data LLC"
 date: "June 8, 2016"
-output: html_document
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE, eval=FALSE}
@@ -168,3 +168,10 @@ path <- paste0("data/flagged_", Sys.Date(), ".csv")
 write.csv(flagged, path, row.names = F)
 
 ```
+---------
+##### Notes to data structure:  
+
+- **tID** is the unique ID applied to each transaction. Because this is consistant accross all transaction record subsets, you can use this to search for a particular record accross tabs.
+- **IN_TRANSACTION_CODE** is the same as **TRANSACTION_CODE**, but named differently because this subset holds only "in-bound" transactions.
+- **nOutTrans** the count of "out-bound" transactions made by the same filing entity within a post 30-day period of the "in-bound" transaction.
+- **totalOut** the sum of "out-bound" transaction **AMOUNT_70** made by the same filing entity within a post 30-day period of the "in-bound" transaction.
