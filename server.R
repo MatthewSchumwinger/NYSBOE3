@@ -1,6 +1,8 @@
 library(shiny)
 # library(data.table)
 
+
+
 # Define server logic required to draw a histogram
 shinyServer(function(input, output, session) {
   
@@ -32,6 +34,7 @@ shinyServer(function(input, output, session) {
   filter = "top"))
   
   output$table_trans <- DT::renderDataTable(DT::datatable({
+    
     df <- trans 
     if (input$E_YEAR != "All") {
       df <- df[df$E_YEAR == input$E_YEAR,]
@@ -53,9 +56,21 @@ shinyServer(function(input, output, session) {
   
   output$table_flaggedA <- DT::renderDataTable(DT::datatable({
     df <- flaggedA 
-    # if (input$E_YEAR != "All") {
-    #   df <- df[df$E_YEAR == input$E_YEAR,]
-    # }
+
+    if (input$IN_TRANSACTION_CODE != "All") {
+      df <- df[df$IN_TRANSACTION_CODE == input$IN_TRANSACTION_CODE, ]
+    }
+    
+    df
+  },
+  filter = "top",
+  # options = list(searching = FALSE)
+  options = list(searching = TRUE)
+  ))
+  
+  output$table_flaggedB <- DT::renderDataTable(DT::datatable({
+    df <- flaggedB 
+
     if (input$IN_TRANSACTION_CODE != "All") {
       df <- df[df$IN_TRANSACTION_CODE == input$IN_TRANSACTION_CODE, ]
     }

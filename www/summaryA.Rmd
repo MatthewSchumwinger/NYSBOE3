@@ -6,6 +6,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE, eval=FALSE}
+setwd("~/Documents/GitHub_projects/NYSBOE3")
 knitr::opts_chunk$set(eval = FALSE, include = FALSE)
 source("global.R") # make sure global.R is set to pick up the full file trans.Rds
 library(stringr)
@@ -33,6 +34,7 @@ ante5yrs <- function(date) {
 ```
 
 ```{r load workspace, include=FALSE}
+setwd("~/Documents/GitHub_projects/NYSBOE3")
 load("data/sugarman.Rds")
 ```
 
@@ -140,8 +142,7 @@ flagged <- ans %>%
   filter(!is.na(direction)) %>% # filters zero rows out
   # group_by(i.tID, FILER_NAME, TRANSACTION_CODE) %>% # this is grouped by outgoing transaction type
   group_by(i.tID, FILER_NAME) %>%
-  summarise(
-            nOutTrans = n(),
+  summarise(nOutTrans = n(),
             totalOut = sum(AMOUNT_70, na.rm = TRUE)) %>%
   mutate(tID = i.tID)
 
@@ -152,15 +153,16 @@ names(flagged) <- c("tID","FILER_NAME", "DATE1_10","IN_TRANSACTION_CODE",
                     "AMOUNT_70","nOutTrans","totalOut" )
 
 nFlagged <- formatC(nrow(flagged), big.mark=",")
+flaggedA <- flagged
 ```
 
  - **`r nFlagged `** incoming contributions (TRANSACTION CODE: "A","B","C","D","E","G") to a "middleman" filer (classed as CONSTITUTED COUNTY or PARTY STATE or associated housekeeping) where that "middleman" made an outgoing contribution (TRANSACTION CODE: "F", "H") within 30 days. (NOTE: this is not conditioned on recipient type (i.e., "candidates campaign") or "similar amount.")
 
 ```{r save workspace, eval=FALSE, include=FALSE}
 ## ---- save workspace ---
-rm(ans, df, justIns, justOuts, cmtes, trans, trans1, trans2, trans3, tBig, tBigRare)
+rm(ans, df, justIns, justOuts, cmtes, trans, trans1, trans2, trans3, tBig, tBigRare, flagged)
 save.image("data/sugarman.Rds")
-saveRDS(setDT(flagged), "data/flaggedA.Rds")
+saveRDS(setDT(flaggedA), "data/flaggedA.Rds")
 
 path <- paste0("data/flagged_", Sys.Date(), ".csv")
 write.csv(flagged, path, row.names = F)

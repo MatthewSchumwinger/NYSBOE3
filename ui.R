@@ -16,7 +16,7 @@ shinyUI(navbarPage(
   tabPanel("Filers",
            
            fluidPage(
-             titlePanel("Filers"),
+             titlePanel("All Filers"),
              
              # Create a new Row in the UI for selectInputs
              fluidRow(
@@ -49,8 +49,9 @@ shinyUI(navbarPage(
   tabPanel("Transactions",
 
            fluidPage(
-             titlePanel("Transactions"),
-             h5("(for election years 2008, 2010, 2012, 2014)"),
+             titlePanel("All Transactions"),
+             # h5("(for election years 2008, 2010, 2012, 2014)"),
+             h5("(for all election years)"),
 
              # Create a new Row in the UI for selectInputs
              fluidRow(
@@ -97,13 +98,7 @@ shinyUI(navbarPage(
                                     c("All",
                                       l_IN_TRANSACTION_CODE))
                  )),
-               #   column(4,
-               #          selectInput("E_YEAR",
-               #                      "E_Year:",
-               #                      c("All",
-               #                        l_E_YEAR))
-               #   )
-               # ),
+
                # Create a new row for the table.
                fluidRow(
                  DT::dataTableOutput("table_flaggedA")
@@ -117,6 +112,37 @@ shinyUI(navbarPage(
              img(src='summaryA.pdf', width = "100%")
 
     )
+  ),
+  
+  navbarMenu("Flagged Set B",
+             tabPanel("data",
+                      
+                      fluidPage(
+                        titlePanel("Flagged Set B"),
+                        h5("(for all election years)"),
+                        
+                        # Create a new Row in the UI for selectInputs
+                        # fluidRow(
+                        #   column(4,
+                        #          selectInput("IN_TRANSACTION_CODE",
+                        #                      "IN Transaction code:",
+                        #                      c("All",
+                        #                        l_IN_TRANSACTION_CODE))
+                        #   )),
+
+                        # Create a new row for the table.
+                        fluidRow(
+                          DT::dataTableOutput("table_flaggedB")
+                        ),
+                        
+                        mycite
+                      )
+             ),
+             
+             tabPanel("Summary",
+                      img(src='summaryB.pdf', width = "100%")
+                      
+             )
   ),
   
   tabPanel("Detailed Transaction View",

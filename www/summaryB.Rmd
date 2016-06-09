@@ -1,0 +1,117 @@
+---
+title: 'Summary: Criteria Set B'
+author: "Matt Schumwinger, Big Lake Data LLC"
+date: "June 8, 2016"
+output: pdf_document
+---
+
+```{r setup, include=FALSE, eval=FALSE}
+setwd("~/Documents/GitHub_projects/NYSBOE3")
+knitr::opts_chunk$set(eval = FALSE, include = FALSE)
+source("global.R") # make sure global.R is set to pick up the full file trans.Rds
+library(stringr)
+library(data.table)
+library(stringr)
+library(lubridate)
+library(dplyr)
+library(knitr)
+
+filers <- data.table(filers, key = "FILER_ID")
+trans <- data.table(trans, key = "FILER_ID")
+# drop bad dates                                                                  TODO: see if these can be saved somehow
+trans <- trans[DATE1_10 >= lubridate::ymd(19990101) 
+                 & DATE1_10 < lubridate::ymd(20170101) ,]
+
+nTrans <- formatC(nrow(trans), big.mark=",")
+nFilers <- formatC(nrow(filers), big.mark=",")
+
+# ----- helpers -----
+ante5yrs <- function(date) {
+  date - lubridate::years(5)
+}
+# inCodes <- c("A","B","C","D","E","G")  # incoming contribution codes
+# outCodes <- c("F", "H")  # outgoing contribution codes
+```
+
+```{r load workspace, include=FALSE}
+setwd("~/Documents/GitHub_projects/NYSBOE3")
+load("data/bird.Rds")
+```
+
+### Applying Bird's steps from June 7th email
+1. Do a VLOOKUP to find the Committee Type for all Filer IDs in a given dataset.
+2. Filter transactions attributed to Type 3 committees.
+3. Filter "TRANSACTION_CODE" for Schedule H transactions (i.e. transfers out).
+4. Filter "AMOUNT_70" for amounts greater than or equal to $25,000
+5. Filter "DATE1_10" for dates in September, October or November (i.e. just before an election)
+
+NYSBOE data profile (all years):  
+
+- **`r nTrans `** transactions
+- **`r nFilers `** filers
+  
+**Steps 1-2: Filter transactions attributed to Type 3 committees.**
+```{r c1, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+# create table of just county or party committees
+cmtes <- subset(filers, FILER_TYPE == "COMMITTEE" 
+                  & COMMITTEE_TYPE %in% c("3","3H", "6", "6H"))
+table(cmtes$COMMITTEE_TYPE)
+# subset transactions matching just filers in committees table
+trans1 <- trans[cmtes] 
+# prune "empty" rows added from join
+trans1 <- filter(trans1, !is.na(FILER_NAME))
+trans1 <- trans1[, c(1:32), with=FALSE]
+
+nCmtes <- formatC(nrow(cmtes), big.mark=",")
+tableCmtes <- data.frame(table(cmtes$COMMITTEE_TYPE))
+names(tableCmtes) <- c("Committee Type", "Count")
+nTrans1 <- formatC(nrow(trans1), big.mark=",") 
+```
+
+- **`r nCmtes `** "middleman" filers classed as CONSTITUTED COUNTY or PARTY STATE or associated housekeeping entities (Committee Type = "3","3H", "6", "6H"). 
+- **`r nTrans1`** transactions matching such filing entities.
+
+**Step 3: Filter "TRANSACTION_CODE" for Schedule H transactions (i.e. transfers out).** 
+```{r c2, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+# subset trans by only incoming contribution codes
+inCodes <- c("A","B","C","D","E","G")  # incoming contribution codes
+outCodes <- c("H")  # outgoing contribution codes
+trans2 <- trans1 %>% filter(TRANSACTION_CODE %in% outCodes)
+
+nTrans2 <- formatC(nrow(trans2), big.mark=",")
+```
+
+ - **`r nTrans2 `** out-going transactions (TRANSACTION CODE: "H") made by a "middleman" filer (classed as CONSTITUTED COUNTY or PARTY STATE or associated housekeeping).
+
+**Step 4: Filter "AMOUNT_70" for amounts greater than or equal to $25,000**
+```{r c3, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+
+# create "oppositeParty" field
+trans3 <- trans2 %>%
+  filter(AMOUNT_70 >= 25000)
+
+nTrans3 <- formatC(nrow(trans3), big.mark=",")
+```
+
+ - **`r nTrans3 `** out-going transactions (TRANSACTION CODE: "H") made by a "middleman" filer (classed as CONSTITUTED COUNTY or PARTY STATE or associated housekeeping) **THAT** are greater or equal to $25,000.
+
+**Step 5: Filter "DATE1_10" for dates in September, October or November (i.e. just before an election)**
+```{r c4, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+flaggedB <- trans3 %>%
+  filter(lubridate::month(trans3$DATE1_10) %in% c(9,10,11))
+
+nFlagged <- formatC(nrow(flaggedB), big.mark=",")
+```
+
+ - **`r nFlagged `** out-going transactions (TRANSACTION CODE: "H") made by a "middleman" filer (classed as CONSTITUTED COUNTY or PARTY STATE or associated housekeeping) **THAT** are greater or equal to $25,000 **AND** occurred in the months of September, October, or November.
+
+```{r save workspace, eval=FALSE, include=FALSE}
+## ---- save workspace ---
+rm(cmtes, trans, trans1, trans2, trans3, flaggedA)
+save.image("data/bird.Rds")
+saveRDS(setDT(flaggedB), "data/flaggedB.Rds")
+
+path <- paste0("data/flaggedB_", Sys.Date(), ".csv")
+write.csv(flagged, path, row.names = F)
+
+```

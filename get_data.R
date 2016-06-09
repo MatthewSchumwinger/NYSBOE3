@@ -54,11 +54,25 @@ get_allreports <- function(){
   
   ## so load data from previously retrieved file
   path <-
-    "~/Dropbox/Analytics-Consulting/Clients/QRI/campaign_finance/raw_data/ALL_REPORTS/ALL_REPORTS.txt"
+    "~/Dropbox/Analytics-Consulting/Clients/QRI/campaign_finance/raw_data/ALL_REPORTS/ALL_REPORTS.out"
   allreports <- readr::read_delim(path, col_names = FALSE, escape_backslash = TRUE,
                                   delim = ",", escape_double = FALSE,
-                                col_types = "cccccccccccccccccccccccccccccc",
-                                locale = readr::locale(encoding = "ASCII"))
+                                col_types = "cccccccccccccccccccccccccccccc")
+  
+  ## remove multibyte non-ASCII characters
+  allreports$X10 <- iconv(allreports$X10, "latin1", "ASCII", sub="~")
+  allreports$X11 <- iconv(allreports$X11, "latin1", "ASCII", sub="~")
+  allreports$X12 <- iconv(allreports$X12, "latin1", "ASCII", sub="~")
+  allreports$X13 <- iconv(allreports$X13, "latin1", "ASCII", sub="~")
+  allreports$X14 <- iconv(allreports$X14, "latin1", "ASCII", sub="~")
+  allreports$X15 <- iconv(allreports$X15, "latin1", "ASCII", sub="~")
+  
+  ##  change amount to numeric
+  allreports$X20 <- as.numeric(allreports$X20)
+  allreports$X21 <- as.numeric(allreports$X21)
+  
+  ## change to date format¬
+  allreports$X6 <- lubridate::mdy(allreports$X6)
   
   allreports
 }
