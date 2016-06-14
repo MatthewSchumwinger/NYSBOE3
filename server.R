@@ -91,4 +91,18 @@ shinyServer(function(input, output, session) {
   },
   width = 90)
   
+  
+  # download filtered data
+  # input$tableId_rows_all
+  output$downloadData_filers <- downloadHandler(
+    filename = function() {
+      paste('filers-subset-', Sys.Date(), '.csv', sep='')
+    },
+    content = function(con) {
+      s = as.numeric(input$table_filers_rows_all)
+      print(str(s))
+      write.csv(filers[s], con)
+    }
+  )
+  
   })

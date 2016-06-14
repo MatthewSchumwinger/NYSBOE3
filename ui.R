@@ -20,6 +20,7 @@ shinyUI(navbarPage(
              
              # Create a new Row in the UI for selectInputs
              fluidRow(
+               
                column(4,
                       selectInput("FILER_TYPE",
                                   "Filer type:",
@@ -43,6 +44,7 @@ shinyUI(navbarPage(
                DT::dataTableOutput("table_filers")
              )
            ),
+           downloadButton('downloadData_filers', 'Download filtered data', class = "download"),
            mycite
   ),
 
