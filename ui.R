@@ -1,6 +1,6 @@
 library(shiny)
 
-mycite <- tags$div(id = "cite", 
+mycite <- tags$div(id = "cite", align = "right",
                    p('Data from the', a(href = "http://www.elections.ny.gov", 
                                         "NYBOE."), "Developed by",
                      a(href = 'https://biglakedata.com', 'Big Lake Data LLC.')))
