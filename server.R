@@ -93,15 +93,43 @@ shinyServer(function(input, output, session) {
   
   
   # download filtered data
-  # input$tableId_rows_all
   output$downloadData_filers <- downloadHandler(
     filename = function() {
       paste('filers-subset-', Sys.Date(), '.csv', sep='')
     },
     content = function(con) {
       s = as.numeric(input$table_filers_rows_all)
-      print(str(s))
       write.csv(filers[s], con)
+    }
+  )
+  
+  output$downloadData_trans <- downloadHandler(
+    filename = function() {
+      paste('trans-subset-', Sys.Date(), '.csv', sep='')
+    },
+    content = function(con) {
+      s = as.numeric(input$table_trans_rows_all)
+      write.csv(trans[s], con)
+    }
+  )
+  
+  output$downloadData_flaggedA <- downloadHandler(
+    filename = function() {
+      paste('flaggedA-subset-', Sys.Date(), '.csv', sep='')
+    },
+    content = function(con) {
+      s = as.numeric(input$table_flaggedA_rows_all)
+      write.csv(flaggedA[s], con)
+    }
+  )
+  
+  output$downloadData_flaggedB <- downloadHandler(
+    filename = function() {
+      paste('flaggedB-subset-', Sys.Date(), '.csv', sep='')
+    },
+    content = function(con) {
+      s = as.numeric(input$table_flaggedB_rows_all)
+      write.csv(flaggedB[s], con)
     }
   )
   

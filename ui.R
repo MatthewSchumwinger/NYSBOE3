@@ -80,6 +80,8 @@ shinyUI(navbarPage(
              fluidRow(
                DT::dataTableOutput("table_trans")
              ),
+             
+             downloadButton('downloadData_trans', 'Download filtered data', class = "download"),
 
              mycite
            )
@@ -105,6 +107,8 @@ shinyUI(navbarPage(
                fluidRow(
                  DT::dataTableOutput("table_flaggedA")
                ),
+               
+               downloadButton('downloadData_flaggedA', 'Download filtered data', class = "download"),
                
                mycite
              )
@@ -138,6 +142,8 @@ shinyUI(navbarPage(
                         fluidRow(
                           DT::dataTableOutput("table_flaggedB")
                         ),
+                        
+                        downloadButton('downloadData_flaggedB', 'Download filtered data', class = "download"),
                         
                         mycite
                       )

@@ -1,3 +1,7 @@
+## load development packages
+devtools::install_github('rstudio/DT')
+library(DT)
+
 ## load data
 # use get_data() to retrieve these files
 # trans <- readRDS("data/allreports.Rds")
