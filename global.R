@@ -1,6 +1,4 @@
-## load development packages
-devtools::install_github('rstudio/DT')
-library(DT)
+library(DT) # TODO: test deleting this
 
 ## load data
 # use get_data() to retrieve these files
