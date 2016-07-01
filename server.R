@@ -92,6 +92,42 @@ shinyServer(function(input, output, session) {
   width = 90)
   
   
+  output$table_hot <- DT::renderDataTable(DT::datatable({
+    
+    # df <- trans 
+
+    # --- parameters ----
+    # targetID <- "63741"      # ID of target "warm" transaction
+    # amount_range <- 20   # +/- % range of amount
+    # date_range <- 5      # range of days
+    # --- ----------- ----
+    
+    warmID <- trans1 %>% filter(tID == input$targetID) %>% select(FILER_ID)
+    max <- trans1 %>% filter(tID == input$targetID) %>% select(AMOUNT_70) * 
+      (1+input$amount_range/100)
+    min <- trans1 %>% filter(tID == input$targetID) %>% select(AMOUNT_70) * 
+      (1-input$amount_range/100)
+    start <- trans1 %>% filter(tID == input$targetID) %>% select(DATE1_10) - days(input$date_range)
+    end <- trans1 %>% filter(tID == input$targetID) %>% select(DATE1_10) + days(input$date_range)
+    int <- interval(start[[1]], end[[1]])
+    
+    df <- trans1 %>% filter(
+      FILER_ID == warmID[[1]] &
+        TRANSACTION_CODE %in% inCodes &
+        DATE1_10 %within% int &
+        AMOUNT_70 <= max[[1]] &
+        AMOUNT_70 >= min[[1]] )
+    
+    
+    # df <- df[ , t_cols, with = FALSE]
+    df
+  },
+  filter = "top",
+  # options = list(searching = FALSE)
+  options = list(searching = TRUE)
+  ))
+  
+  
   # download filtered data
   output$downloadData_filers <- downloadHandler(
     filename = function() {

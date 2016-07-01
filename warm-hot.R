@@ -1,4 +1,4 @@
-# test the warm/hot method
+## for the warm/hot method
 
 # create table of just county or party committees
 cmtes <- subset(filers, FILER_TYPE == "COMMITTEE" 
@@ -9,6 +9,7 @@ trans1 <- trans[cmtes]
 # prune "empty" rows added from join
 trans1 <- filter(trans1, !is.na(FILER_NAME))
 trans1 <- trans1[, c(1:32), with=FALSE]
+outCodes <- c("F", "H")  # outgoing contribution codes
 
 
 # --- parameters ----
@@ -16,8 +17,6 @@ targetID <- "63741"      # ID of target "warm" transaction
 amount_range <- .2   # +/- range of amount
 date_range <- 30      # range of days
 # --- ----------- ----
-
-outCodes <- c("F", "H")  # outgoing contribution codes
 
 warmID <- trans1 %>% filter(tID == targetID) %>% select(FILER_ID)
 max <- trans1 %>% filter(tID == targetID) %>% select(AMOUNT_70) * (1+amount_range)
