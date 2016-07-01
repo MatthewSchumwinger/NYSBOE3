@@ -113,3 +113,16 @@ t_cols <- names(trans)
 t_cols <- t_cols[-c(3,6,8,10,19,20,22:31)]
 
 
+## ------ for the warm/hot method ----------
+
+# create table of just county or party committees
+cmtes <- subset(filers, FILER_TYPE == "COMMITTEE" 
+                & COMMITTEE_TYPE %in% c("3","3H", "6", "6H"))
+table(cmtes$COMMITTEE_TYPE)
+# subset transactions matching just filers in committees table
+trans1 <- trans[cmtes] 
+# prune "empty" rows added from join
+trans1 <- filter(trans1, !is.na(FILER_NAME))
+trans1 <- trans1[, c(1:32), with=FALSE]
+outCodes <- c("F", "H")  # outgoing contribution codes
+inCodes <- c("A","B","C","D","E","G")  # incoming contribution codes
