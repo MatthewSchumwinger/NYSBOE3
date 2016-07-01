@@ -187,14 +187,14 @@ shinyUI(navbarPage(
   tabPanel("warm-to-hot finder",
            
            fluidPage(
-             titlePanel("potential incoming `hot` pass-through transactions"),
-             h5("(for election years 2008, 2010, 2012, 2014, 2016)"),
+             titlePanel("potential outgoing `hot` pass-through transactions"),
+             h5("(Outgoing 'F' or 'H' transaction codes for election years 2008, 2010, 2012, 2014, 2016)"),
              
              
              # Create a new Row in the UI for selectInputs
              fluidRow(
                column(4,
-                      numericInput("targetID", "tID of outgoing `warm` contribution transaction:", 1)
+                      numericInput("targetID", "tID of incoming `warm` contribution transaction (transaction code 'A','B','C','D','E', or 'G') :", 1)
                ),
                column(4,
                       numericInput("amount_range", "% +/- variance from `warm` transaction AMOUNT_70:", 1)
@@ -208,11 +208,12 @@ shinyUI(navbarPage(
                DT::dataTableOutput("table_hot")
              ),
              
-             downloadButton('downloadtable_hot', 'Download data', class = "download"),
+             # downloadButton('downloadtable_hot', 'Download data', class = "download"),
              
              mycite
            )
            
+
   )
   
 )

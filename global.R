@@ -1,4 +1,10 @@
 library(DT) # TODO: test deleting this
+library(stringr)
+library(data.table)
+library(stringr)
+library(lubridate)
+library(dplyr)
+library(knitr)
 
 ## load data
 # use get_data() to retrieve these files

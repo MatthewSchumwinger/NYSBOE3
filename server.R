@@ -46,7 +46,7 @@ shinyServer(function(input, output, session) {
       df <- df[df$TRANSACTION_CODE == input$TRANSACTION_CODE, ]
     }
 
-    df <- df[ , t_cols, with = FALSE]
+    # df <- df[ , t_cols, with = FALSE]
     df
     },
     filter = "top",
@@ -97,7 +97,7 @@ shinyServer(function(input, output, session) {
     # df <- trans 
 
     # --- parameters ----
-    # targetID <- "63741"      # ID of target "warm" transaction
+    # targetID <- "4670170"      # ID of target "warm" transaction
     # amount_range <- 20   # +/- % range of amount
     # date_range <- 5      # range of days
     # --- ----------- ----
@@ -113,7 +113,7 @@ shinyServer(function(input, output, session) {
     
     df <- trans1 %>% filter(
       FILER_ID == warmID[[1]] &
-        TRANSACTION_CODE %in% inCodes &
+        TRANSACTION_CODE %in% outCodes &
         DATE1_10 %within% int &
         AMOUNT_70 <= max[[1]] &
         AMOUNT_70 >= min[[1]] )
@@ -166,6 +166,16 @@ shinyServer(function(input, output, session) {
     content = function(con) {
       s = as.numeric(input$table_flaggedB_rows_all)
       write.csv(flaggedB[s], con)
+    }
+  )
+  
+  output$downloadtable_hot <- downloadHandler(
+    filename = function() {
+      paste('hot-subset-', Sys.Date(), '.csv', sep='')
+    },
+    content = function(con) {
+      s = as.numeric(input$downloadtable_hot_rows_all)
+      write.csv(trans1[s], con) #BUG: fix this
     }
   )
   
